@@ -15,22 +15,21 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private BufferedImage background;
 
     public GamePanel() {
-        setPreferredSize(new Dimension(600, 400));
+        setPreferredSize(new Dimension(600, 800));
         setFocusable(true);
         addKeyListener(this);
 
-        // Tải ảnh nền
         try {
             background = ImageIO.read(new File("resources/background.png"));
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh nền: " + e.getMessage());
         }
 
-        ball = new Ball(300, 200);
-        paddle = new Paddle(250, 350);
+        ball = new Ball(290, 730);
+        paddle = new Paddle(250, 750);
         bricks = new ArrayList<>();
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 8; j++) {
                 bricks.add(new Brick(70 * j + 10, 30 * i + 10));
             }
@@ -42,8 +41,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-
-        // Vẽ ảnh nền
         if (background != null) {
             g.drawImage(background, 0, 0, getWidth(), getHeight(), null);
         }

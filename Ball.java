@@ -7,14 +7,14 @@ import java.util.List;
 import java.util.Iterator;
 
 public class Ball {
-    private int x, y, dx = 2, dy = -2, size = 32;
+    private int x, y, dx = 2, dy = -2, size = 20;
     private BufferedImage image;
 
     public Ball(int x, int y) {
         this.x = x;
         this.y = y;
         try {
-            image = ImageIO.read(new File("resources/ball.png")); // Đường dẫn tương đối
+            image = ImageIO.read(new File("resources/ball.png"));
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh bóng: " + e.getMessage());
         }
@@ -23,7 +23,6 @@ public class Ball {
     public void move() {
         x += dx;
         y += dy;
-
         if (x <= 0 || x >= 600 - size) dx *= -1;
         if (y <= 0) dy *= -1;
     }
@@ -42,9 +41,9 @@ public class Ball {
             }
         }
 
-        if (y >= 400) {
-            x = 300;
-            y = 200;
+        if (y >= 800) {
+            x = 290;
+            y = 730;
             dx = 2;
             dy = -2;
         }
