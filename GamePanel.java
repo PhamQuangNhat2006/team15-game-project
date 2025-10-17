@@ -1,6 +1,10 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class GamePanel extends JPanel implements ActionListener, KeyListener {
@@ -8,12 +12,19 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Ball ball;
     private Paddle paddle;
     private ArrayList<Brick> bricks;
+    private BufferedImage background;
 
     public GamePanel() {
         setPreferredSize(new Dimension(600, 400));
-        setBackground(Color.BLACK);
         setFocusable(true);
         addKeyListener(this);
+
+        // Tải ảnh nền
+        try {
+            background = ImageIO.read(new File("resources/background.png"));
+        } catch (IOException e) {
+            System.out.println("Không thể tải ảnh nền: " + e.getMessage());
+        }
 
         ball = new Ball(300, 200);
         paddle = new Paddle(250, 350);
@@ -31,6 +42,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+
+        // Vẽ ảnh nền
+        if (background != null) {
+            g.drawImage(background, 0, 0, getWidth(), getHeight(), null);
+        }
+
         ball.draw(g);
         paddle.draw(g);
         for (Brick brick : bricks) {
