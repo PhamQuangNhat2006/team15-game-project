@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.IOException;
 
 public class Paddle {
-    private int x, y, width = 100, height = 15;
+    private int x, y;
+    private final int width = 100;
+    private final int height = 15;
     private BufferedImage image;
 
     public Paddle(int x, int y) {
@@ -18,12 +20,12 @@ public class Paddle {
         }
     }
 
-    public void moveLeft() {
-        if (x > 0) x -= 20;
+    public void setX(int newX) {
+        x = Math.max(0, Math.min(newX, 600 - width));
     }
 
-    public void moveRight() {
-        if (x < 600 - width) x += 20;
+    public int getWidth() {
+        return width;
     }
 
     public Rectangle getBounds() {
@@ -34,7 +36,7 @@ public class Paddle {
         if (image != null) {
             g.drawImage(image, x, y, width, height, null);
         } else {
-            g.setColor(Color.GREEN);
+            g.setColor(Color.WHITE);
             g.fillRect(x, y, width, height);
         }
     }

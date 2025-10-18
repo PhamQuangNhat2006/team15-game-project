@@ -7,7 +7,10 @@ import java.util.List;
 import java.util.Iterator;
 
 public class Ball {
-    private int x, y, dx = 2, dy = -2, size = 20;
+    private int x, y;
+    private int dx = 4; // tốc độ ngang (tăng từ 2 lên 4)
+    private int dy = -4; // tốc độ dọc (tăng từ -2 lên -4)
+    private final int size = 20;
     private BufferedImage image;
 
     public Ball(int x, int y) {
@@ -23,32 +26,47 @@ public class Ball {
     public void move() {
         x += dx;
         y += dy;
-        if (x <= 0 || x >= 600 - size) dx *= -1;
-        if (y <= 0) dy *= -1;
+
+        // Va chạm với mép trái/phải
+        if (x <= 0 || x >= 600 - size) {
+            dx *= -1;
+        }
+
+        // Va chạm với mép trên
+        if (y <= 0) {
+            dy *= -1;
+        }
     }
 
-    public void checkCollision(Paddle paddle, List<Brick> bricks) {
+    public void checkCollision(Paddle paddle, List<Brick> bricks, GamePanel panel) {
         Rectangle ballRect = new Rectangle(x, y, size, size);
+
         if (ballRect.intersects(paddle.getBounds())) dy *= -1;
 
         Iterator<Brick> it = bricks.iterator();
         while (it.hasNext()) {
             Brick brick = it.next();
             if (ballRect.intersects(brick.getBounds())) {
+                brick.hit();
+                if (brick.isDestroyed()) {
+                    bricks.remove(brick);
+                }
                 dy *= -1;
-                it.remove();
+                GamePanel.scoreUp();
                 break;
             }
         }
 
         if (y >= 800) {
-            x = 290;
-            y = 730;
-            dx = 2;
-            dy = -2;
+            panel.loseLife();
         }
     }
-
+    public void reset() {
+        x = 290;
+        y = 730;
+        dx = 4;
+        dy = -4;
+    }
     public void draw(Graphics g) {
         if (image != null) {
             g.drawImage(image, x, y, size, size, null);

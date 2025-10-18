@@ -5,16 +5,23 @@ import java.io.File;
 import java.io.IOException;
 
 public class Brick {
-    private int x, y, width = 60, height = 20;
-    private BufferedImage image;
+    private int x, y;
+    private final int width = 60;
+    private final int height = 20;
+    private int state = 0;
+    private boolean destroyed = false;
+    private BufferedImage[] images = new BufferedImage[5];
 
-    public Brick(int x, int y) {
+    public Brick(int x, int y, String colorPrefix) {
         this.x = x;
         this.y = y;
+
         try {
-            image = ImageIO.read(new File("resources/brick_new.png")); // ảnh mới
+            for (int i = 0; i < 5; i++) {
+                images[i] = ImageIO.read(new File("resources/" + colorPrefix + "_" + i + ".png"));
+            }
         } catch (IOException e) {
-            System.out.println("Không thể tải ảnh brick: " + e.getMessage());
+            System.out.println("Không thể tải ảnh gạch: " + colorPrefix + " - " + e.getMessage());
         }
     }
 
@@ -22,12 +29,22 @@ public class Brick {
         return new Rectangle(x, y, width, height);
     }
 
+    public boolean isDestroyed() {
+        return destroyed;
+    }
+
+    public void hit() {
+        if (!destroyed) {
+            state++;
+            if (state >= images.length) {
+                destroyed = true;
+            }
+        }
+    }
+
     public void draw(Graphics g) {
-        if (image != null) {
-            g.drawImage(image, x, y, width, height, null);
-        } else {
-            g.setColor(Color.RED);
-            g.fillRect(x, y, width, height);
+        if (!destroyed && images[state] != null) {
+            g.drawImage(images[state], x, y, width, height, null);
         }
     }
 }
