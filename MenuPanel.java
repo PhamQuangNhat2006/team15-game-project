@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 public class MenuPanel extends JPanel {
     private BufferedImage background;
@@ -14,9 +15,17 @@ public class MenuPanel extends JPanel {
         setLayout(null); // dùng vị trí tuyệt đối
 
         try {
-            background = ImageIO.read(new File("resources/background.png"));
+
+            URL imageUrl = getClass().getResource("/background.png");
+
+            if (imageUrl == null) {
+                System.out.println("Lỗi: Không tìm thấy tệp /background.png");
+            } else {
+                background = ImageIO.read(imageUrl);
+            }
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh nền: " + e.getMessage());
+            e.printStackTrace();
         }
 
         JButton startButton = new JButton("Bắt đầu");

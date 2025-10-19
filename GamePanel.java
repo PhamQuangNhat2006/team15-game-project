@@ -6,6 +6,7 @@ import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.net.URL;
 
 public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Timer timer;
@@ -20,9 +21,17 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         addKeyListener(this);
 
         try {
-            background = ImageIO.read(new File("resources/background.png"));
+            
+            URL imageUrl = getClass().getResource("/background.png"); 
+            
+            if (imageUrl == null) {
+                System.out.println("Lỗi: Không tìm thấy tệp /background.png trong dự án!");
+            } else {
+                background = ImageIO.read(imageUrl);
+            }
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh nền: " + e.getMessage());
+            e.printStackTrace();
         }
 
         ball = new Ball(290, 730);

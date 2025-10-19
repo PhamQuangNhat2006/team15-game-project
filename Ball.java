@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Iterator;
+import java.net.URL;
 
 public class Ball {
     private int x, y, dx = 2, dy = -2, size = 20;
@@ -13,11 +14,21 @@ public class Ball {
     public Ball(int x, int y) {
         this.x = x;
         this.y = y;
+        
         try {
-            image = ImageIO.read(new File("resources/ball.png"));
+            
+            URL imageUrl = getClass().getResource("/ball.png");
+            
+            if (imageUrl == null) {
+                System.out.println("Lỗi: Không tìm thấy tệp /ball.png");
+            } else {
+                image = ImageIO.read(imageUrl);
+            }
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh bóng: " + e.getMessage());
+            e.printStackTrace();
         }
+        
     }
 
     public void move() {
