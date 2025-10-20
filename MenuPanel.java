@@ -7,53 +7,84 @@ import java.io.File;
 import java.io.IOException;
 
 public class MenuPanel extends JPanel {
-    private BufferedImage background;
+    private BufferedImage background, logo;
 
-    public MenuPanel(JFrame frame) {
+    public MenuPanel() {
+        setLayout(null); // dùng setBounds cho nút
         setPreferredSize(new Dimension(600, 800));
-        setLayout(null);
 
+        // Tải ảnh nền và logo PNG
         try {
-            background = ImageIO.read(new File("resources/background.png"));
+            background = ImageIO.read(new File("resources/menu_bg.png"));
+            logo = ImageIO.read(new File("resources/arkanoid_logo.png"));
         } catch (IOException e) {
-            System.out.println("Không thể tải ảnh nền: " + e.getMessage());
+            System.out.println("Không thể tải ảnh: " + e.getMessage());
         }
 
-        JButton startButton = new JButton("Bắt đầu");
-        startButton.setBounds(200, 500, 200, 50);
-        add(startButton);
+        // Tạo các nút menu
+        add(createButton("START", 200, 280, Color.PINK, e -> {
+            JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+            topFrame.setContentPane(new GamePanel());
+            topFrame.revalidate();
+        }));
 
-        JButton exitButton = new JButton("Thoát");
-        exitButton.setBounds(200, 570, 200, 50);
-        add(exitButton);
+        add(createButton("{CONTINUE}", 200, 340, Color.YELLOW, e -> {
+            JOptionPane.showMessageDialog(this, "Chức năng CONTINUE chưa được triển khai.");
+        }));
 
-        startButton.addActionListener(e -> {
-            GamePanel game = new GamePanel();
-            frame.setContentPane(game);
-            frame.revalidate();
-            game.requestFocusInWindow();
-        });
+        add(createButton("NEW GAME", 200, 400, Color.GREEN, e -> {
+            GamePanel.score = 0;
+            JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+            topFrame.setContentPane(new GamePanel());
+            topFrame.revalidate();
+        }));
 
-        exitButton.addActionListener(e -> System.exit(0));
+        add(createButton("HIGH SCORE", 200, 460, Color.CYAN, e -> {
+            JOptionPane.showMessageDialog(this, "Điểm cao: " + GamePanel.score);
+        }));
+
+        add(createButton("HOW TO PLAY", 200, 520, Color.RED, e -> {
+            JOptionPane.showMessageDialog(this,
+                    "- Di chuyển paddle bằng chuột\n" +
+                            "- Đỡ bóng để phá hết các viên gạch\n" +
+                            "- Mỗi viên gạch bị phá: +10 điểm\n" +
+                            "- Mất bóng: -1 mạng (tối đa 3 mạng)\n" +
+                            "- Game Over khi hết mạng"
+            );
+        }));
+
+        add(createButton("EXIT", 200, 580, Color.ORANGE, e -> System.exit(0)));
+    }
+
+    private JButton createButton(String text, int x, int y, Color color, ActionListener action) {
+        JButton button = new JButton(text);
+        button.setBounds(x, y, 200, 40);
+        button.setFont(new Font("Arial", Font.BOLD, 20));
+        button.setForeground(color);
+        button.setBackground(Color.BLACK);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setContentAreaFilled(false);
+        button.addActionListener(action);
+        return button;
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+
+        // Vẽ ảnh nền
         if (background != null) {
             g.drawImage(background, 0, 0, getWidth(), getHeight(), null);
         }
 
-        // Vẽ hướng dẫn chơi
-        g.setColor(Color.GREEN);
-        g.setFont(new Font("Arial", Font.BOLD, 22));
-        g.drawString("🎮 HƯỚNG DẪN CHƠI", 200, 100);
-
-        g.setFont(new Font("Arial", Font.PLAIN, 18));
-        g.drawString("- Di chuyển paddle bằng chuột", 100, 140);
-        g.drawString("- Đỡ bóng để phá hết các viên gạch", 100, 170);
-        g.drawString("- Mỗi viên gạch bị phá: +10 điểm", 100, 200);
-        g.drawString("- Mất bóng: -1 mạng (tối đa 3 mạng)", 100, 230);
-        g.drawString("- Game Over khi hết mạng", 100, 260);
+        // Vẽ logo ở giữa trên
+        if (logo != null) {
+            int logoWidth = 400;
+            int logoHeight = 150;
+            int x = (getWidth() - logoWidth) / 2;
+            int y = 100;
+            g.drawImage(logo, x, y, logoWidth, logoHeight, null);
+        }
     }
 }

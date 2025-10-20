@@ -2,16 +2,18 @@ import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {
-        JFrame frame = new JFrame("Arkanoid Vertical");
+        // Tạo cửa sổ game
+        JFrame frame = new JFrame("Arkanoid Neon");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
 
-        MenuPanel menu = new MenuPanel(frame);
-        frame.setContentPane(menu);
+        // Gắn icon cho cửa sổ (ảnh PNG)
+        frame.setIconImage(new ImageIcon("resources/icon.png").getImage());
+
+        // Gắn menu chính
+        frame.setContentPane(new MenuPanel());
         frame.pack();
-        frame.setLocationRelativeTo(null);
+        frame.setLocationRelativeTo(null); // căn giữa màn hình
         frame.setVisible(true);
-        ImageIcon icon = new ImageIcon("resources/icon.png"); 
-        frame.setIconImage(icon.getImage());
     }
 }
