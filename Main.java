@@ -11,5 +11,7 @@ public class Main {
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+        ImageIcon icon = new ImageIcon("resources/icon.png"); 
+        frame.setIconImage(icon.getImage());
     }
 }
