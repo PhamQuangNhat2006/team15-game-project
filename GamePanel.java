@@ -1,107 +1,110 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
-import javax.imageio.ImageIO;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 
 public class GamePanel extends JPanel implements ActionListener {
-    private Timer timer;
-    private Ball ball;
-    private Paddle paddle;
-    private ArrayList<Brick> bricks;
-    private BufferedImage background;
     public static int score = 0;
-    private int lives = 3;
-    private boolean gameOver = false;
+
+    private final int WIDTH = 600, HEIGHT = 700;
+    private Timer timer;
+    private int ballX = 300, ballY = 400;
+    private int ballDX = 3, ballDY = -3;
+    private final int ballSize = 20;
+
+    private int paddleX = 250;
+    private final int paddleY = 650;
+    private final int paddleWidth = 100, paddleHeight = 15;
+
+    private ArrayList<Rectangle> bricks;
 
     public GamePanel() {
-        setPreferredSize(new Dimension(600, 700));
-        setFocusable(true);
-        requestFocusInWindow();
-
-        try {
-            background = ImageIO.read(new File("resources/background.png"));
-        } catch (IOException e) {
-            System.out.println("Không thể tải ảnh nền: " + e.getMessage());
-        }
-
-        Toolkit toolkit = Toolkit.getDefaultToolkit();
-        Image invisibleImage = toolkit.createImage(new byte[0]);
-        Cursor invisibleCursor = toolkit.createCustomCursor(invisibleImage, new Point(0, 0), "InvisibleCursor");
-        setCursor(invisibleCursor);
-
-        ball = new Ball(290, 730);
-        paddle = new Paddle(250, 750);
-        bricks = new ArrayList<>();
-
-        String[] colors = {"brick", "yellowbrick", "bluebrick", "greenbrick"};
-        for (int i = 0; i < 6; i++) {
-            for (int j = 0; j < 8; j++) {
-                String color = colors[(i + j) % colors.length];
-                bricks.add(new Brick(70 * j + 10, 30 * i + 10, color));
-            }
-        }
+        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        setBackground(Color.BLACK);
+        timer = new Timer(10, this);
+        timer.start();
 
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
-                paddle.setX(e.getX() - paddle.getWidth() / 2);
-                repaint();
+                paddleX = e.getX() - paddleWidth / 2;
             }
         });
 
-        timer = new Timer(10, this);
-        timer.start();
-    }
-
-    public static void scoreUp() {
-        score += 10;
-    }
-
-    public void loseLife() {
-        lives--;
-        if (lives <= 0) {
-            gameOver = true;
-            timer.stop();
-        } else {
-            ball.reset();
-        }
-    }
-
-    @Override
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        if (background != null) {
-            g.drawImage(background, 0, 0, getWidth(), getHeight(), null);
-        }
-
-        ball.draw(g);
-        paddle.draw(g);
-        for (Brick brick : bricks) {
-            brick.draw(g);
-        }
-
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 24));
-        g.drawString("Điểm: " + score, 20, 40);
-        g.drawString("Mạng: " + lives, 480, 40);
-
-        if (gameOver) {
-            g.setFont(new Font("Arial", Font.BOLD, 48));
-            g.setColor(Color.RED);
-            g.drawString("GAME OVER", 180, 400);
+        bricks = new ArrayList<>();
+        for (int row = 0; row < 4; row++) {
+            for (int col = 0; col < 10; col++) {
+                bricks.add(new Rectangle(60 * col + 10, 40 * row + 50, 50, 20));
+            }
         }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!gameOver) {
-            ball.move();
-            ball.checkCollision(paddle, bricks, this);
+        ballX += ballDX;
+        ballY += ballDY;
+
+        // Va chạm với tường
+        if (ballX <= 0 || ballX + ballSize >= WIDTH) ballDX *= -1;
+        if (ballY <= 0) ballDY *= -1;
+
+        // Va chạm với paddle (có quán tính)
+        if (ballY + ballSize >= paddleY && ballY + ballSize <= paddleY + paddleHeight) {
+            if (ballX + ballSize >= paddleX && ballX <= paddleX + paddleWidth) {
+                ballDY = -Math.abs(ballDY);
+
+                int hitPos = ballX + ballSize / 2 - paddleX;
+                double relative = (double) hitPos / paddleWidth;
+                ballDX = (int) ((relative - 0.5) * 10);
+                if (ballDX == 0) ballDX = (Math.random() < 0.5) ? -1 : 1;
+            }
         }
+
+        // Va chạm với gạch
+        for (int i = 0; i < bricks.size(); i++) {
+            Rectangle brick = bricks.get(i);
+            Rectangle ballRect = new Rectangle(ballX, ballY, ballSize, ballSize);
+            if (ballRect.intersects(brick)) {
+                bricks.remove(i);
+                ballDY *= -1;
+                score += 10;
+                break;
+            }
+        }
+
+        // Game over
+        if (ballY > HEIGHT) {
+            timer.stop();
+            JOptionPane.showMessageDialog(this, "Game Over!\nĐiểm của bạn: " + score);
+            JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+            topFrame.setContentPane(new MenuPanel());
+            topFrame.revalidate();
+        }
+
         repaint();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        // Vẽ bóng
+        g.setColor(Color.WHITE);
+        g.fillOval(ballX, ballY, ballSize, ballSize);
+
+        // Vẽ paddle
+        g.setColor(Color.CYAN);
+        g.fillRect(paddleX, paddleY, paddleWidth, paddleHeight);
+
+        // Vẽ gạch
+        g.setColor(Color.ORANGE);
+        for (Rectangle brick : bricks) {
+            g.fillRect(brick.x, brick.y, brick.width, brick.height);
+        }
+
+        // Vẽ điểm
+        g.setColor(Color.GREEN);
+        g.setFont(new Font("Arial", Font.BOLD, 20));
+        g.drawString("Score: " + score, 20, 30);
     }
 }
