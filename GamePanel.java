@@ -2,83 +2,91 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
+
 
 public class GamePanel extends JPanel implements ActionListener {
-    public static int score = 0;
-
-    private final int WIDTH = 600, HEIGHT = 700;
+    private final int WIDTH = 600, HEIGHT = 800;
     private Timer timer;
-    private int ballX = 300, ballY = 400;
-    private int ballDX = 3, ballDY = -3;
-    private final int ballSize = 20;
+    private Ball ball;
+    private Paddle paddle;
+    private ArrayList<Brick> bricks;
+    private BufferedImage backgroundImage;
+    private int score = 0;
+    private int lives = 3;
 
-    private int paddleX = 250;
-    private final int paddleY = 650;
-    private final int paddleWidth = 100, paddleHeight = 15;
-
-    private ArrayList<Rectangle> bricks;
 
     public GamePanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        setCursor(getToolkit().createCustomCursor(
+                new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB),
+                new Point(0, 0),
+                "blank cursor"
+        ));
         setBackground(Color.BLACK);
-        timer = new Timer(10, this);
-        timer.start();
+        try {
+            backgroundImage = ImageIO.read(new File("resources/background.png")); // đổi tên nếu cần
+        } catch (IOException e) {
+            System.out.println("Không thể tải ảnh nền: " + e.getMessage());
+        }
+
+        ball = new Ball(300, 400, 20, 5, -6);
+        paddle = new Paddle(250, 750, 100, 15);
+
+        bricks = new ArrayList<>();
+        String[] prefixes = {"brick", "yellowbrick", "greenbrick", "bluebrick"};
+        for (int row = 0; row < 5; row++) {
+            for (int col = 0; col < 10; col++) {
+                int x = 60 * col + 10;
+                int y = 40 * row + 50;
+                String prefix = prefixes[row % prefixes.length];
+                bricks.add(new Brick(x, y, prefix));
+            }
+        }
 
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
-                paddleX = e.getX() - paddleWidth / 2;
+                paddle.setX(e.getX() - paddle.getWidth() / 2);
             }
         });
 
-        bricks = new ArrayList<>();
-        for (int row = 0; row < 4; row++) {
-            for (int col = 0; col < 10; col++) {
-                bricks.add(new Rectangle(60 * col + 10, 40 * row + 50, 50, 20));
-            }
-        }
+        timer = new Timer(10, this);
+        timer.start();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        ballX += ballDX;
-        ballY += ballDY;
+        ball.move();
+        ball.checkWallCollision(WIDTH, HEIGHT);
 
-        // Va chạm với tường
-        if (ballX <= 0 || ballX + ballSize >= WIDTH) ballDX *= -1;
-        if (ballY <= 0) ballDY *= -1;
-
-        // Va chạm với paddle (có quán tính)
-        if (ballY + ballSize >= paddleY && ballY + ballSize <= paddleY + paddleHeight) {
-            if (ballX + ballSize >= paddleX && ballX <= paddleX + paddleWidth) {
-                ballDY = -Math.abs(ballDY);
-
-                int hitPos = ballX + ballSize / 2 - paddleX;
-                double relative = (double) hitPos / paddleWidth;
-                ballDX = (int) ((relative - 0.5) * 10);
-                if (ballDX == 0) ballDX = (Math.random() < 0.5) ? -1 : 1;
-            }
+        if (ball.getRect().intersects(paddle.getRect())) {
+            ball.bounceFromPaddle(paddle);
         }
 
-        // Va chạm với gạch
-        for (int i = 0; i < bricks.size(); i++) {
-            Rectangle brick = bricks.get(i);
-            Rectangle ballRect = new Rectangle(ballX, ballY, ballSize, ballSize);
-            if (ballRect.intersects(brick)) {
-                bricks.remove(i);
-                ballDY *= -1;
+        for (Brick brick : bricks) {
+            if (!brick.isDestroyed() && ball.getRect().intersects(brick.getBounds())) {
+                brick.hit();
+                ball.reverseY();
                 score += 10;
                 break;
             }
         }
 
-        // Game over
-        if (ballY > HEIGHT) {
-            timer.stop();
-            JOptionPane.showMessageDialog(this, "Game Over!\nĐiểm của bạn: " + score);
-            JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-            topFrame.setContentPane(new MenuPanel());
-            topFrame.revalidate();
+        if (ball.getY() > HEIGHT) {
+            lives--;
+            if (lives <= 0) {
+                timer.stop();
+                JOptionPane.showMessageDialog(this, "Game Over!\nĐiểm của bạn: " + score);
+                JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                topFrame.setContentPane(new MenuPanel());
+                topFrame.revalidate();
+            } else {
+                ball.resetPosition();
+            }
         }
 
         repaint();
@@ -86,25 +94,19 @@ public class GamePanel extends JPanel implements ActionListener {
 
     @Override
     protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+        super.paintComponent(g); // gọi trước để xóa nền cũ
 
-        // Vẽ bóng
-        g.setColor(Color.WHITE);
-        g.fillOval(ballX, ballY, ballSize, ballSize);
-
-        // Vẽ paddle
-        g.setColor(Color.CYAN);
-        g.fillRect(paddleX, paddleY, paddleWidth, paddleHeight);
-
-        // Vẽ gạch
-        g.setColor(Color.ORANGE);
-        for (Rectangle brick : bricks) {
-            g.fillRect(brick.x, brick.y, brick.width, brick.height);
+        if (backgroundImage != null) {
+            g.drawImage(backgroundImage, 0, 0, WIDTH, HEIGHT, null);
         }
-
-        // Vẽ điểm
-        g.setColor(Color.GREEN);
+        ball.draw(g);
+        paddle.draw(g);
+        for (Brick brick : bricks) {
+            brick.draw(g);
+        }
+        g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 20));
         g.drawString("Score: " + score, 20, 30);
+        g.drawString("Lives: " + lives, 500, 30);
     }
 }

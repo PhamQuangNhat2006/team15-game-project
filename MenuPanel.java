@@ -8,13 +8,9 @@ import java.io.IOException;
 
 public class MenuPanel extends JPanel {
     private BufferedImage menuImage;
-    private final int WIDTH = 600, HEIGHT = 700;
+    private final int WIDTH = 610, HEIGHT = 800;
 
-    private Rectangle startRect       = new Rectangle(200, 280, 200, 40);
-    private Rectangle continueRect    = new Rectangle(200, 340, 200, 40);
-    private Rectangle newGameRect     = new Rectangle(200, 400, 200, 40);
-    private Rectangle highScoreRect   = new Rectangle(200, 460, 200, 40);
-    private Rectangle howToPlayRect   = new Rectangle(200, 520, 200, 40);
+    private Rectangle startRect       = new Rectangle(200, 300, 200, 40);
     private Rectangle exitRect        = new Rectangle(200, 580, 200, 40);
 
     public MenuPanel() {
@@ -31,22 +27,9 @@ public class MenuPanel extends JPanel {
                 Point click = e.getPoint();
                 JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(MenuPanel.this);
 
-                if (startRect.contains(click) || newGameRect.contains(click)) {
-                    GamePanel.score = 0;
+                if (startRect.contains(click)) {
                     topFrame.setContentPane(new GamePanel());
                     topFrame.revalidate();
-                } else if (continueRect.contains(click)) {
-                    JOptionPane.showMessageDialog(MenuPanel.this, "Chức năng CONTINUE chưa được triển khai.");
-                } else if (highScoreRect.contains(click)) {
-                    JOptionPane.showMessageDialog(MenuPanel.this, "Điểm cao: " + GamePanel.score);
-                } else if (howToPlayRect.contains(click)) {
-                    JOptionPane.showMessageDialog(MenuPanel.this,
-                            "- Di chuyển paddle bằng chuột\n" +
-                                    "- Đỡ bóng để phá hết các viên gạch\n" +
-                                    "- Mỗi viên gạch bị phá: +10 điểm\n" +
-                                    "- Mất bóng: -1 mạng (tối đa 3 mạng)\n" +
-                                    "- Game Over khi hết mạng"
-                    );
                 } else if (exitRect.contains(click)) {
                     System.exit(0);
                 }

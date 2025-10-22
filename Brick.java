@@ -12,16 +12,16 @@ public class Brick {
     private boolean destroyed = false;
     private BufferedImage[] images = new BufferedImage[5];
 
-    public Brick(int x, int y, String colorPrefix) {
+    public Brick(int x, int y, String prefix) {
         this.x = x;
         this.y = y;
 
         try {
             for (int i = 0; i < 5; i++) {
-                images[i] = ImageIO.read(new File("resources/" + colorPrefix + "_" + i + ".png"));
+                images[i] = ImageIO.read(new File("resources/" + prefix + "_" + i + ".png"));
             }
         } catch (IOException e) {
-            System.out.println("Không thể tải ảnh gạch: " + colorPrefix + " - " + e.getMessage());
+            System.out.println("Không thể tải ảnh gạch: " + prefix + " - " + e.getMessage());
         }
     }
 

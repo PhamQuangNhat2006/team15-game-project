@@ -5,8 +5,8 @@ public class Main {
         JFrame frame = new JFrame("Arkanoid Neon");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
-
         frame.setIconImage(new ImageIcon("resources/icon.png").getImage());
+
         frame.setContentPane(new MenuPanel());
         frame.pack();
         frame.setLocationRelativeTo(null);
