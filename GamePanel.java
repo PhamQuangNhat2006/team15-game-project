@@ -17,6 +17,7 @@ public class GamePanel extends JPanel implements ActionListener {
     private BufferedImage backgroundImage;
     private int score = 0;
     private int lives = 3;
+    private boolean isPaused = false;
 
 
     public GamePanel() {
@@ -53,13 +54,16 @@ public class GamePanel extends JPanel implements ActionListener {
                 paddle.setX(e.getX() - paddle.getWidth() / 2);
             }
         });
-
+        setFocusable(true); 
+        requestFocusInWindow();
+        addKeyListener(new InputHandler(this));
         timer = new Timer(10, this);
         timer.start();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (!isPaused) {
         ball.move();
         ball.checkWallCollision(WIDTH, HEIGHT);
 
@@ -88,6 +92,7 @@ public class GamePanel extends JPanel implements ActionListener {
                 ball.resetPosition();
             }
         }
+    }
 
         repaint();
     }
@@ -108,5 +113,22 @@ public class GamePanel extends JPanel implements ActionListener {
         g.setFont(new Font("Arial", Font.BOLD, 20));
         g.drawString("Score: " + score, 20, 30);
         g.drawString("Lives: " + lives, 500, 30);
+        if (isPaused) {
+            
+            g.setColor(new Color(0, 0, 0, 150)); 
+            g.fillRect(0, 0, WIDTH, HEIGHT);
+            
+            
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 50));
+            String pauseText = "PAUSED";
+            
+            
+            int stringWidth = g.getFontMetrics().stringWidth(pauseText);
+            g.drawString(pauseText, (WIDTH - stringWidth) / 2, HEIGHT / 2);
+        }
+    }
+    public void togglePause() {
+        this.isPaused = !this.isPaused; 
     }
 }
