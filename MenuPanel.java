@@ -3,7 +3,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
-import java.io.File;
+
 import java.io.IOException;
 
 public class MenuPanel extends JPanel {
@@ -16,7 +16,7 @@ public class MenuPanel extends JPanel {
     public MenuPanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         try {
-            menuImage = ImageIO.read(new File("resources/menu_bg.png"));
+            menuImage = ImageIO.read(getClass().getResource("/Resources/menu_bg.png"));
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh menu: " + e.getMessage());
         }
@@ -28,8 +28,10 @@ public class MenuPanel extends JPanel {
                 JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(MenuPanel.this);
 
                 if (startRect.contains(click)) {
+                    GamePanel gamePanel = new GamePanel();
                     topFrame.setContentPane(new GamePanel());
                     topFrame.revalidate();
+                    gamePanel.requestFocusInWindow();
                 } else if (exitRect.contains(click)) {
                     System.exit(0);
                 }
