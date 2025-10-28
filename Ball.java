@@ -3,13 +3,17 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-
+import java.awt.AlphaComposite;
+import java.util.ArrayList;
+import java.awt.Point;
 
 
 public class Ball {
     private int x, y, size;
     private int dx, dy;
     private BufferedImage ballImage;
+    private ArrayList<Point> trail = new ArrayList<>();
+    private final int TRAIL_LENGTH = 10;
 
     public Ball(int x, int y, int size, int dx, int dy) {
         this.x = x;
@@ -27,6 +31,11 @@ public class Ball {
     public void move() {
         x += dx;
         y += dy;
+        trail.add(new Point(x, y));
+        if (trail.size() > TRAIL_LENGTH) {
+            trail.remove(0);
+        }
+
     }
 
     public void checkWallCollision(int width, int height) {
@@ -55,11 +64,24 @@ public class Ball {
     }
 
     public void draw(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g;
+
+        // Vẽ vệt sáng mờ dần
+        for (int i = 0; i < trail.size(); i++) {
+            Point p = trail.get(i);
+            float alpha = (float) i / TRAIL_LENGTH; // độ mờ tăng dần
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g2.setColor(Color.CYAN); // màu vệt sáng
+            g2.fillOval(p.x, p.y, size, size);
+        }
+
+        // Vẽ bóng chính
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
         if (ballImage != null) {
-            g.drawImage(ballImage, x, y, size, size, null);
+            g2.drawImage(ballImage, x, y, size, size, null);
         } else {
-            g.setColor(Color.WHITE);
-            g.fillOval(x, y, size, size);
+            g2.setColor(Color.WHITE);
+            g2.fillOval(x, y, size, size);
         }
     }
     public void resetPosition() {
