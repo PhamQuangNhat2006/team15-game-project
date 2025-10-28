@@ -12,6 +12,14 @@ public class Brick {
     private boolean destroyed = false;
     private BufferedImage[] images = new BufferedImage[5];
 
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
     public Brick(int x, int y, String prefix) {
         this.x = x;
         this.y = y;

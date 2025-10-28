@@ -14,6 +14,8 @@ public class Ball {
     private BufferedImage ballImage;
     private ArrayList<Point> trail = new ArrayList<>();
     private final int TRAIL_LENGTH = 10;
+    private boolean fireMode = false;
+    private int fireHits = 0;
 
     public Ball(int x, int y, int size, int dx, int dy) {
         this.x = x;
@@ -67,11 +69,13 @@ public class Ball {
         Graphics2D g2 = (Graphics2D) g;
 
         // Vẽ vệt sáng mờ dần
+        Color trailColor = fireMode ? Color.RED : Color.CYAN;
+
         for (int i = 0; i < trail.size(); i++) {
             Point p = trail.get(i);
-            float alpha = (float) i / TRAIL_LENGTH; // độ mờ tăng dần
+            float alpha = (float) i / TRAIL_LENGTH;
             g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-            g2.setColor(Color.CYAN); // màu vệt sáng
+            g2.setColor(trailColor);
             g2.fillOval(p.x, p.y, size, size);
         }
 
@@ -87,7 +91,39 @@ public class Ball {
     public void resetPosition() {
         x = 300;
         y = 400;
-        dx = 3;
-        dy = -3;
+        dx = 7;
+        dy = -8;
+        fireMode = false;
+        fireHits = 0;
+
+    }
+    public void setSpeed(int dx, int dy) {
+        this.dx = dx;
+        this.dy = dy;
+    }
+    public int getDx() {
+        return dx;
+    }
+
+    public int getDy() {
+        return dy;
+    }
+
+    public void setFireMode(boolean fireMode) {
+        this.fireMode = fireMode;
+        this.fireHits = fireMode ? 5 : 0;
+
+    }
+
+    public boolean isFireMode() {
+        return fireMode;
+    }
+    public void consumeFireHit() {
+        if (fireHits > 0) {
+            fireHits--;
+            if (fireHits == 0) {
+                fireMode = false;
+            }
+        }
     }
 }

@@ -28,6 +28,10 @@ public class Paddle {
         return x;
     }
 
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
     public int getWidth() {
         return width;
     }

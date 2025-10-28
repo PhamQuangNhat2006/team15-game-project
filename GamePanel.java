@@ -16,6 +16,24 @@ public class GamePanel extends JPanel implements ActionListener {
     private int score = 0;
     private int lives = 3;
     private boolean isPaused = false;
+    private ArrayList<PowerUp> powerUps = new ArrayList<>();
+    private void activatePowerUp(String type) {
+        switch (type) {
+            case "expand":
+                paddle.setWidth(paddle.getWidth() + 50);
+                break;
+            case "slow":
+                ball.setSpeed(ball.getDx() / 2, ball.getDy() / 2);
+                break;
+            case "shield":
+                lives++;
+                break;
+            case "fire":
+                ball.setFireMode(true);
+                break;
+
+        }
+    }
 
     public GamePanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
@@ -32,7 +50,7 @@ public class GamePanel extends JPanel implements ActionListener {
             System.out.println("Không thể tải ảnh nền: " + e.getMessage());
         }
 
-        ball = new Ball(300, 400, 20, 5, -6);
+        ball = new Ball(300, 400, 20, 8, -9);
         paddle = new Paddle(250, 750, 100, 15);
         bricks = new ArrayList<>();
 
@@ -67,6 +85,13 @@ public class GamePanel extends JPanel implements ActionListener {
     }
     @Override
     public void actionPerformed(ActionEvent e) {
+        for (PowerUp p : powerUps) {
+            p.move();
+            if (p.getRect().intersects(paddle.getRect()) && p.isActive()) {
+                activatePowerUp(p.getType());
+                p.deactivate();
+            }
+        }
         if(!isPaused) {
         ball.move();
         ball.checkWallCollision(WIDTH, HEIGHT);
@@ -82,8 +107,24 @@ public class GamePanel extends JPanel implements ActionListener {
                 brick.hit();
                 ball.reverseY();
                 score += 10;
+
+                if (!ball.isFireMode()) {
+                    ball.consumeFireHit();
+                }
+                else {
+                    ball.reverseY(); // chỉ bật lại nếu không phải fireball
+                }
+
+                // 30% tạo power-up
+                if (Math.random() < 0.3) {
+                    String[] types = {"expand", "slow", "shield", "fire"};
+                    String type = types[(int)(Math.random() * types.length)];
+                    powerUps.add(new PowerUp(brick.getX(), brick.getY(), type));
+                }
+
                 break;
             }
+
         }
 
         if (ball.getY() > HEIGHT) {
@@ -91,11 +132,18 @@ public class GamePanel extends JPanel implements ActionListener {
             if (lives <= 0) {
                 timer.stop();
                 JOptionPane.showMessageDialog(this, "Game Over!\nĐiểm của bạn: " + score);
-                JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-                topFrame.setContentPane(new MenuPanel());
 
-                topFrame.revalidate();
-            } else {
+                SwingUtilities.invokeLater(() -> {
+                    JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                    if (topFrame != null) {
+                        topFrame.setContentPane(new MenuPanel());
+                        topFrame.revalidate();
+                    } else {
+                        System.err.println("Không tìm thấy JFrame cha.");
+                    }
+                });
+            }
+            else {
                 ball.resetPosition();
             }
 
@@ -107,28 +155,17 @@ public class GamePanel extends JPanel implements ActionListener {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g); // gọi trước để xóa nền cũ
-
         if (backgroundImage != null) {
-
             g.drawImage(backgroundImage, 0, 0, WIDTH, HEIGHT, null);
-
         }
-
         ball.draw(g);
-
         paddle.draw(g);
-
         for (Brick brick : bricks) {
-
             brick.draw(g);
         }
-
         g.setColor(Color.WHITE);
-
         g.setFont(new Font("Arial", Font.BOLD, 20));
-
         g.drawString("Score: " + score, 20, 30);
-
         g.drawString("Lives: " + lives, 500, 30);
         if (isPaused) {
             g.setColor(new Color(0, 0, 0, 150)); 
@@ -139,6 +176,9 @@ public class GamePanel extends JPanel implements ActionListener {
             String pauseText = "PAUSED";
             int stringWidth = g.getFontMetrics().stringWidth(pauseText);
             g.drawString(pauseText, (WIDTH - stringWidth) / 2, HEIGHT / 2);
+        }
+        for (PowerUp p : powerUps) {
+            p.draw(g);
         }
 
     }
