@@ -27,7 +27,9 @@ public class Ball {
             ballImage = ImageIO.read(new File("resources/ball.png")); // đổi tên nếu cần
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh bóng: " + e.getMessage());
+            e.printStackTrace();
         }
+        
     }
 
     public void move() {

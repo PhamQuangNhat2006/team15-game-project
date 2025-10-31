@@ -3,6 +3,7 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 public class Paddle {
     private int x, y, width, height;
@@ -17,7 +18,9 @@ public class Paddle {
             paddleImage = ImageIO.read(new File("resources/paddle.png")); // đổi tên nếu cần
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh paddle: " + e.getMessage());
+            e.printStackTrace();
         }
+        
     }
 
     public void setX(int x) {
