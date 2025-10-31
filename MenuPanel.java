@@ -3,52 +3,48 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
-import java.io.File;
+
 import java.io.IOException;
 import java.net.URL;
 
 public class MenuPanel extends JPanel {
-    private BufferedImage background;
+    private BufferedImage menuImage;
+    private final int WIDTH = 610, HEIGHT = 800;
 
-    public MenuPanel(JFrame frame) {
-        setPreferredSize(new Dimension(600, 800));
-        setLayout(null); // dùng vị trí tuyệt đối
+    private Rectangle startRect       = new Rectangle(200, 300, 200, 40);
+    private Rectangle exitRect        = new Rectangle(200, 580, 200, 40);
 
+    public MenuPanel() {
+        setPreferredSize(new Dimension(WIDTH, HEIGHT));
         try {
-
-            URL imageUrl = getClass().getResource("/background.png");
-
-            if (imageUrl == null) {
-                System.out.println("Lỗi: Không tìm thấy tệp /background.png");
-            } else {
-                background = ImageIO.read(imageUrl);
-            }
+            menuImage = ImageIO.read(getClass().getResource("/Resources/menu_bg.png"));
         } catch (IOException e) {
-            System.out.println("Không thể tải ảnh nền: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("Không thể tải ảnh menu: " + e.getMessage());
         }
 
-        JButton startButton = new JButton("Bắt đầu");
-        startButton.setBounds(200, 300, 200, 50);
-        add(startButton);
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                Point click = e.getPoint();
+                JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(MenuPanel.this);
 
-        JButton exitButton = new JButton("Thoát");
-        exitButton.setBounds(200, 370, 200, 50);
-        add(exitButton);
-
-        startButton.addActionListener(e -> {
-            frame.setContentPane(new GamePanel());
-            frame.revalidate();
+                if (startRect.contains(click)) {
+                    GamePanel gamePanel = new GamePanel();
+                    topFrame.setContentPane(new GamePanel());
+                    topFrame.revalidate();
+                    gamePanel.requestFocusInWindow();
+                } else if (exitRect.contains(click)) {
+                    System.exit(0);
+                }
+            }
         });
-
-        exitButton.addActionListener(e -> System.exit(0));
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (background != null) {
-            g.drawImage(background, 0, 0, getWidth(), getHeight(), null);
+        if (menuImage != null) {
+            g.drawImage(menuImage, 0, 0, WIDTH, HEIGHT, null);
         }
     }
 }

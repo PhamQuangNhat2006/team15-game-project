@@ -1,77 +1,195 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.net.URL;
 
-public class GamePanel extends JPanel implements ActionListener, KeyListener {
+public class GamePanel extends JPanel implements ActionListener {
+    private final int WIDTH = 600, HEIGHT = 800;
     private Timer timer;
     private Ball ball;
     private Paddle paddle;
     private ArrayList<Brick> bricks;
-    private BufferedImage background;
+    private BufferedImage backgroundImage;
+    private int score = 0;
+    private int lives = 3;
+    private boolean isPaused = false;
+    private ArrayList<PowerUp> powerUps = new ArrayList<>();
+    private void activatePowerUp(String type) {
+        switch (type) {
+            case "expand":
+                paddle.setWidth(paddle.getWidth() + 50);
+                break;
+            case "slow":
+                ball.setSpeed(ball.getDx() / 2, ball.getDy() / 2);
+                break;
+            case "shield":
+                lives++;
+                break;
+            case "fire":
+                ball.setFireMode(true);
+                break;
+
+        }
+    }
 
     public GamePanel() {
-        setPreferredSize(new Dimension(600, 800));
-        setFocusable(true);
-        addKeyListener(this);
-
+        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        setCursor(getToolkit().createCustomCursor(
+                new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB),
+                new Point(0, 0),
+                "blank cursor"
+        ));
+        setBackground(Color.BLACK);
         try {
-            
-            URL imageUrl = getClass().getResource("/background.png"); 
-            
-            if (imageUrl == null) {
-                System.out.println("Lỗi: Không tìm thấy tệp /background.png trong dự án!");
-            } else {
-                background = ImageIO.read(imageUrl);
-            }
+
+    backgroundImage = ImageIO.read(getClass().getResource("/resources/background.png"));
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh nền: " + e.getMessage());
             e.printStackTrace();
         }
 
-        ball = new Ball(290, 730);
-        paddle = new Paddle(250, 750);
+        ball = new Ball(300, 400, 20, 8, -9);
+        paddle = new Paddle(250, 750, 100, 15);
         bricks = new ArrayList<>();
 
-        for (int i = 0; i < 6; i++) {
-            for (int j = 0; j < 8; j++) {
-                bricks.add(new Brick(70 * j + 10, 30 * i + 10));
+        String[] prefixes = {"brick", "yellowbrick", "greenbrick", "bluebrick"};
+
+        for (int row = 0; row < 5; row++) {
+            for (int col = 0; col < 10; col++) {
+                int x = 60 * col + 10;
+                int y = 40 * row + 50;
+                String prefix = prefixes[row % prefixes.length];
+                bricks.add(new Brick(x, y, prefix));
             }
         }
 
+        addMouseMotionListener(new MouseMotionAdapter() {
+
+            @Override
+
+            public void mouseMoved(MouseEvent e) {
+                paddle.setX(e.getX() - paddle.getWidth() / 2);
+            }
+
+        });
+
+        setFocusable(true);
+        addKeyListener(new InputHandler(this));
+        requestFocusInWindow();
+
         timer = new Timer(10, this);
         timer.start();
-    }
 
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        if (background != null) {
-            g.drawImage(background, 0, 0, getWidth(), getHeight(), null);
+    }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        for (PowerUp p : powerUps) {
+            p.move();
+            if (p.getRect().intersects(paddle.getRect()) && p.isActive()) {
+                activatePowerUp(p.getType());
+                p.deactivate();
+            }
+        }
+        if(!isPaused) {
+        ball.move();
+        ball.checkWallCollision(WIDTH, HEIGHT);
+        if (ball.getRect().intersects(paddle.getRect())) {
+
+            ball.bounceFromPaddle(paddle);
+
         }
 
+        for (Brick brick : bricks) {
+
+            if (!brick.isDestroyed() && ball.getRect().intersects(brick.getBounds())) {
+                brick.hit();
+                ball.reverseY();
+                score += 10;
+
+                if (!ball.isFireMode()) {
+                    ball.consumeFireHit();
+                }
+                else {
+                    ball.reverseY(); // chỉ bật lại nếu không phải fireball
+                }
+
+                // 30% tạo power-up
+                if (Math.random() < 0.3) {
+                    String[] types = {"expand", "slow", "shield", "fire"};
+                    String type = types[(int)(Math.random() * types.length)];
+                    powerUps.add(new PowerUp(brick.getX(), brick.getY(), type));
+                }
+
+                break;
+            }
+
+        }
+
+        if (ball.getY() > HEIGHT) {
+            lives--;
+            if (lives <= 0) {
+                timer.stop();
+                JOptionPane.showMessageDialog(this, "Game Over!\nĐiểm của bạn: " + score);
+
+                SwingUtilities.invokeLater(() -> {
+                    JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                    if (topFrame != null) {
+                        topFrame.setContentPane(new MenuPanel());
+                        topFrame.revalidate();
+                    } else {
+                        System.err.println("Không tìm thấy JFrame cha.");
+                    }
+                });
+            }
+            else {
+                ball.resetPosition();
+            }
+
+        }
+    }
+        repaint();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g); // gọi trước để xóa nền cũ
+        if (backgroundImage != null) {
+            g.drawImage(backgroundImage, 0, 0, WIDTH, HEIGHT, null);
+        }
         ball.draw(g);
         paddle.draw(g);
         for (Brick brick : bricks) {
             brick.draw(g);
         }
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Arial", Font.BOLD, 20));
+        g.drawString("Score: " + score, 20, 30);
+        g.drawString("Lives: " + lives, 500, 30);
+        if (isPaused) {
+            g.setColor(new Color(0, 0, 0, 150)); 
+            g.fillRect(0, 0, WIDTH, HEIGHT);
+            
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 50));
+            String pauseText = "PAUSED";
+            int stringWidth = g.getFontMetrics().stringWidth(pauseText);
+            g.drawString(pauseText, (WIDTH - stringWidth) / 2, HEIGHT / 2);
+        }
+        for (PowerUp p : powerUps) {
+            p.draw(g);
+        }
+
+    }
+    public void togglePause() {
+        this.isPaused = !this.isPaused; 
     }
 
-    public void actionPerformed(ActionEvent e) {
-        ball.move();
-        ball.checkCollision(paddle, bricks);
-        repaint();
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        requestFocusInWindow();
     }
-
-    public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_LEFT) paddle.moveLeft();
-        if (e.getKeyCode() == KeyEvent.VK_RIGHT) paddle.moveRight();
-    }
-
-    public void keyReleased(KeyEvent e) {}
-    public void keyTyped(KeyEvent e) {}
 }

@@ -6,21 +6,16 @@ import java.io.IOException;
 import java.net.URL;
 
 public class Paddle {
-    private int x, y, width = 100, height = 15;
-    private BufferedImage image;
+    private int x, y, width, height;
+    private BufferedImage paddleImage;
 
-    public Paddle(int x, int y) {
+    public Paddle(int x, int y, int width, int height) {
         this.x = x;
         this.y = y;
+        this.width = width;
+        this.height = height;
         try {
-           
-            URL imageUrl = getClass().getResource("/paddle.png"); 
-            
-            if (imageUrl == null) {
-                System.out.println("Lỗi: Không tìm thấy tệp /paddle.png");
-            } else {
-                image = ImageIO.read(imageUrl);
-            }
+            paddleImage = ImageIO.read(new File("resources/paddle.png")); // đổi tên nếu cần
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh paddle: " + e.getMessage());
             e.printStackTrace();
@@ -28,23 +23,32 @@ public class Paddle {
         
     }
 
-    public void moveLeft() {
-        if (x > 0) x -= 20;
+    public void setX(int x) {
+        this.x = x;
     }
 
-    public void moveRight() {
-        if (x < 600 - width) x += 20;
+    public int getX() {
+        return x;
     }
 
-    public Rectangle getBounds() {
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public Rectangle getRect() {
         return new Rectangle(x, y, width, height);
     }
 
     public void draw(Graphics g) {
-        if (image != null) {
-            g.drawImage(image, x, y, width, height, null);
+        g.setColor(Color.CYAN);
+        if (paddleImage != null) {
+            g.drawImage(paddleImage, x, y, width, height, null);
         } else {
-            g.setColor(Color.GREEN);
+            g.setColor(Color.CYAN);
             g.fillRect(x, y, width, height);
         }
     }

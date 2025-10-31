@@ -3,27 +3,28 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Iterator;
-import java.net.URL;
+import java.awt.AlphaComposite;
+import java.util.ArrayList;
+import java.awt.Point;
+
 
 public class Ball {
-    private int x, y, dx = 2, dy = -2, size = 20;
-    private BufferedImage image;
+    private int x, y, size;
+    private int dx, dy;
+    private BufferedImage ballImage;
+    private ArrayList<Point> trail = new ArrayList<>();
+    private final int TRAIL_LENGTH = 10;
+    private boolean fireMode = false;
+    private int fireHits = 0;
 
-    public Ball(int x, int y) {
+    public Ball(int x, int y, int size, int dx, int dy) {
         this.x = x;
         this.y = y;
-        
+        this.size = size;
+        this.dx = dx;
+        this.dy = dy;
         try {
-            
-            URL imageUrl = getClass().getResource("/ball.png");
-            
-            if (imageUrl == null) {
-                System.out.println("Lỗi: Không tìm thấy tệp /ball.png");
-            } else {
-                image = ImageIO.read(imageUrl);
-            }
+            ballImage = ImageIO.read(new File("resources/ball.png")); // đổi tên nếu cần
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh bóng: " + e.getMessage());
             e.printStackTrace();
@@ -34,38 +35,97 @@ public class Ball {
     public void move() {
         x += dx;
         y += dy;
-        if (x <= 0 || x >= 600 - size) dx *= -1;
+        trail.add(new Point(x, y));
+        if (trail.size() > TRAIL_LENGTH) {
+            trail.remove(0);
+        }
+
+    }
+
+    public void checkWallCollision(int width, int height) {
+        if (x <= 0 || x + size >= width) dx *= -1;
         if (y <= 0) dy *= -1;
     }
 
-    public void checkCollision(Paddle paddle, List<Brick> bricks) {
-        Rectangle ballRect = new Rectangle(x, y, size, size);
-        if (ballRect.intersects(paddle.getBounds())) dy *= -1;
+    public void bounceFromPaddle(Paddle paddle) {
+        dy = -Math.abs(dy);
+        int hitPos = x + size / 2 - paddle.getX();
+        double relative = (double) hitPos / paddle.getWidth();
+        dx = (int) ((relative - 0.5) * 10);
+        if (dx == 0) dx = (Math.random() < 0.5) ? -1 : 1;
+    }
 
-        Iterator<Brick> it = bricks.iterator();
-        while (it.hasNext()) {
-            Brick brick = it.next();
-            if (ballRect.intersects(brick.getBounds())) {
-                dy *= -1;
-                it.remove();
-                break;
-            }
-        }
+    public void reverseY() {
+        dy *= -1;
+    }
 
-        if (y >= 800) {
-            x = 290;
-            y = 730;
-            dx = 2;
-            dy = -2;
-        }
+    public Rectangle getRect() {
+        return new Rectangle(x, y, size, size);
+    }
+
+    public int getY() {
+        return y;
     }
 
     public void draw(Graphics g) {
-        if (image != null) {
-            g.drawImage(image, x, y, size, size, null);
+        Graphics2D g2 = (Graphics2D) g;
+
+        // Vẽ vệt sáng mờ dần
+        Color trailColor = fireMode ? Color.RED : Color.CYAN;
+
+        for (int i = 0; i < trail.size(); i++) {
+            Point p = trail.get(i);
+            float alpha = (float) i / TRAIL_LENGTH;
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+            g2.setColor(trailColor);
+            g2.fillOval(p.x, p.y, size, size);
+        }
+
+        // Vẽ bóng chính
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+        if (ballImage != null) {
+            g2.drawImage(ballImage, x, y, size, size, null);
         } else {
-            g.setColor(Color.WHITE);
-            g.fillOval(x, y, size, size);
+            g2.setColor(Color.WHITE);
+            g2.fillOval(x, y, size, size);
+        }
+    }
+    public void resetPosition() {
+        x = 300;
+        y = 400;
+        dx = 7;
+        dy = -8;
+        fireMode = false;
+        fireHits = 0;
+
+    }
+    public void setSpeed(int dx, int dy) {
+        this.dx = dx;
+        this.dy = dy;
+    }
+    public int getDx() {
+        return dx;
+    }
+
+    public int getDy() {
+        return dy;
+    }
+
+    public void setFireMode(boolean fireMode) {
+        this.fireMode = fireMode;
+        this.fireHits = fireMode ? 5 : 0;
+
+    }
+
+    public boolean isFireMode() {
+        return fireMode;
+    }
+    public void consumeFireHit() {
+        if (fireHits > 0) {
+            fireHits--;
+            if (fireHits == 0) {
+                fireMode = false;
+            }
         }
     }
 }

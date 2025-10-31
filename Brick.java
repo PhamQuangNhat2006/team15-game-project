@@ -5,25 +5,31 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 public class Brick {
-    private int x, y, width = 60, height = 20;
-    private BufferedImage image;
+    private int x, y;
+    private final int width = 60;
+    private final int height = 20;
+    private int state = 0;
+    private boolean destroyed = false;
+    private BufferedImage[] images = new BufferedImage[5];
 
-    public Brick(int x, int y) {
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public Brick(int x, int y, String prefix) {
         this.x = x;
         this.y = y;
-       
+
         try {
-            
-            URL imageUrl = getClass().getResource("/brick.png"); 
-            
-            if (imageUrl == null) {
-                System.out.println("Lỗi: Không tìm thấy tệp /brick.png");
-            } else {
-                image = ImageIO.read(imageUrl);
+            for (int i = 0; i < 5; i++) {
+                images[i] = ImageIO.read(new File("resources/" + prefix + "_" + i + ".png"));
             }
         } catch (IOException e) {
-            System.out.println("Không thể tải ảnh brick: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("Không thể tải ảnh gạch: " + prefix + " - " + e.getMessage());
         }
         
     }
@@ -32,12 +38,22 @@ public class Brick {
         return new Rectangle(x, y, width, height);
     }
 
+    public boolean isDestroyed() {
+        return destroyed;
+    }
+
+    public void hit() {
+        if (!destroyed) {
+            state++;
+            if (state >= images.length) {
+                destroyed = true;
+            }
+        }
+    }
+
     public void draw(Graphics g) {
-        if (image != null) {
-            g.drawImage(image, x, y, width, height, null);
-        } else {
-            g.setColor(Color.RED);
-            g.fillRect(x, y, width, height);
+        if (!destroyed && images[state] != null) {
+            g.drawImage(images[state], x, y, width, height, null);
         }
     }
 }
