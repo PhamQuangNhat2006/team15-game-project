@@ -48,7 +48,6 @@ public class GamePanel extends JPanel implements ActionListener {
     backgroundImage = ImageIO.read(getClass().getResource("/resources/background.png"));
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh nền: " + e.getMessage());
-            e.printStackTrace();
         }
 
         ball = new Ball(300, 400, 20, 8, -9);

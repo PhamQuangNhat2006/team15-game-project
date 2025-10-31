@@ -3,7 +3,7 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+
 public class Brick {
     private int x, y;
     private final int width = 60;
@@ -31,7 +31,6 @@ public class Brick {
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh gạch: " + prefix + " - " + e.getMessage());
         }
-        
     }
 
     public Rectangle getBounds() {
