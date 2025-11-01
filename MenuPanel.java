@@ -3,19 +3,19 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
-
 import java.io.IOException;
-import java.net.URL;
 
 public class MenuPanel extends JPanel {
     private BufferedImage menuImage;
     private final int WIDTH = 610, HEIGHT = 800;
-
-    private Rectangle startRect       = new Rectangle(200, 300, 200, 40);
-    private Rectangle exitRect        = new Rectangle(200, 580, 200, 40);
+    private Rectangle startRect = new Rectangle(200, 300, 200, 40);
+    private Rectangle exitRect = new Rectangle(200, 580, 200, 40);
+    private SoundManager soundManager;
 
     public MenuPanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        soundManager = SoundManager.getInstance();
+
         try {
             menuImage = ImageIO.read(getClass().getResource("/Resources/menu_bg.png"));
         } catch (IOException e) {
@@ -29,12 +29,34 @@ public class MenuPanel extends JPanel {
                 JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(MenuPanel.this);
 
                 if (startRect.contains(click)) {
-                    GamePanel gamePanel = new GamePanel();
-                    topFrame.setContentPane(new GamePanel());
-                    topFrame.revalidate();
-                    gamePanel.requestFocusInWindow();
+                    soundManager.playSound("button_click");
+
+                    // Small delay to let sound play
+                    Timer delayTimer = new Timer(100, new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent evt) {
+                            GamePanel gamePanel = new GamePanel();
+                            topFrame.setContentPane(gamePanel);
+                            topFrame.revalidate();
+                            gamePanel.requestFocusInWindow();
+                            ((Timer)evt.getSource()).stop();
+                        }
+                    });
+                    delayTimer.setRepeats(false);
+                    delayTimer.start();
+
                 } else if (exitRect.contains(click)) {
-                    System.exit(0);
+                    soundManager.playSound("button_click");
+
+                    // Small delay to let sound play before exiting
+                    Timer delayTimer = new Timer(200, new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent evt) {
+                            System.exit(0);
+                        }
+                    });
+                    delayTimer.setRepeats(false);
+                    delayTimer.start();
                 }
             }
         });
