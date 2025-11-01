@@ -3,35 +3,25 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+
 public class Brick {
     private int x, y;
-    private final int width = 60;
-    private final int height = 20;
+    private final int width = 60, height = 20;
     private int state = 0;
     private boolean destroyed = false;
-    private BufferedImage[] images = new BufferedImage[5];
-
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
-    }
+    private BufferedImage[] images = new BufferedImage[3];
 
     public Brick(int x, int y, String prefix) {
         this.x = x;
         this.y = y;
 
         try {
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < images.length; i++) {
                 images[i] = ImageIO.read(new File("resources/" + prefix + "_" + i + ".png"));
             }
         } catch (IOException e) {
-            System.out.println("Không thể tải ảnh gạch: " + prefix + " - " + e.getMessage());
+            System.out.println("Không thể tải ảnh gạch: " + e.getMessage());
         }
-        
     }
 
     public Rectangle getBounds() {
@@ -45,8 +35,10 @@ public class Brick {
     public void hit() {
         if (!destroyed) {
             state++;
+            SoundManager.play("hit");
             if (state >= images.length) {
                 destroyed = true;
+                SoundManager.play("brick_break");
             }
         }
     }

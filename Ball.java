@@ -7,7 +7,6 @@ import java.awt.AlphaComposite;
 import java.util.ArrayList;
 import java.awt.Point;
 
-
 public class Ball {
     private int x, y, size;
     private int dx, dy;
@@ -24,27 +23,28 @@ public class Ball {
         this.dx = dx;
         this.dy = dy;
         try {
-            ballImage = ImageIO.read(new File("resources/ball.png")); // đổi tên nếu cần
+            ballImage = ImageIO.read(new File("resources/ball.png"));
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh bóng: " + e.getMessage());
-            e.printStackTrace();
         }
-        
     }
 
     public void move() {
         x += dx;
         y += dy;
         trail.add(new Point(x, y));
-        if (trail.size() > TRAIL_LENGTH) {
-            trail.remove(0);
-        }
-
+        if (trail.size() > TRAIL_LENGTH) trail.remove(0);
     }
 
     public void checkWallCollision(int width, int height) {
-        if (x <= 0 || x + size >= width) dx *= -1;
-        if (y <= 0) dy *= -1;
+        if (x <= 0 || x + size >= width) {
+            dx *= -1;
+            SoundManager.play("hit");
+        }
+        if (y <= 0) {
+            dy *= -1;
+            SoundManager.play("hit");
+        }
     }
 
     public void bounceFromPaddle(Paddle paddle) {
@@ -53,10 +53,7 @@ public class Ball {
         double relative = (double) hitPos / paddle.getWidth();
         dx = (int) ((relative - 0.5) * 10);
         if (dx == 0) dx = (Math.random() < 0.5) ? -1 : 1;
-    }
-
-    public void reverseY() {
-        dy *= -1;
+        SoundManager.play("hit");
     }
 
     public Rectangle getRect() {
@@ -69,8 +66,6 @@ public class Ball {
 
     public void draw(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
-
-        // Vẽ vệt sáng mờ dần
         Color trailColor = fireMode ? Color.RED : Color.CYAN;
 
         for (int i = 0; i < trail.size(); i++) {
@@ -81,15 +76,14 @@ public class Ball {
             g2.fillOval(p.x, p.y, size, size);
         }
 
-        // Vẽ bóng chính
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-        if (ballImage != null) {
-            g2.drawImage(ballImage, x, y, size, size, null);
-        } else {
+        if (ballImage != null) g2.drawImage(ballImage, x, y, size, size, null);
+        else {
             g2.setColor(Color.WHITE);
             g2.fillOval(x, y, size, size);
         }
     }
+
     public void resetPosition() {
         x = 300;
         y = 400;
@@ -97,35 +91,10 @@ public class Ball {
         dy = -8;
         fireMode = false;
         fireHits = 0;
-
-    }
-    public void setSpeed(int dx, int dy) {
-        this.dx = dx;
-        this.dy = dy;
-    }
-    public int getDx() {
-        return dx;
-    }
-
-    public int getDy() {
-        return dy;
     }
 
     public void setFireMode(boolean fireMode) {
         this.fireMode = fireMode;
         this.fireHits = fireMode ? 5 : 0;
-
-    }
-
-    public boolean isFireMode() {
-        return fireMode;
-    }
-    public void consumeFireHit() {
-        if (fireHits > 0) {
-            fireHits--;
-            if (fireHits == 0) {
-                fireMode = false;
-            }
-        }
     }
 }
