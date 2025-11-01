@@ -22,16 +22,13 @@ public class SoundManager {
     }
 
     private void loadSounds() {
-        // Load sound effects
-        loadSound("hit", "resources/sounds/hit.wav");
-        loadSound("bounce", "resources/sounds/bounce.wav");
-        loadSound("powerup", "resources/sounds/powerup.wav");
-        loadSound("lose", "resources/sounds/lose.wav");
-        loadSound("brick", "resources/sounds/brick.wav");
-        loadSound("gameover", "resources/sounds/gameover.wav");
-
-        // Load background music
-        loadBackgroundMusic("resources/sounds/background.wav");
+        // Load sound effects matching your files
+        loadSound("brick_break", "resources/brick_break.wav");
+        loadSound("win", "resources/win.wav");
+        loadSound("lose_life", "resources/lose_life.wav");
+        loadSound("hit", "resources/hit.wav");
+        loadSound("powerup", "resources/powerup.wav");
+        loadSound("button_click", "resources/button_click.wav");
     }
 
     private void loadSound(String name, String path) {
@@ -51,22 +48,6 @@ public class SoundManager {
         }
     }
 
-    private void loadBackgroundMusic(String path) {
-        try {
-            File soundFile = new File(path);
-            if (!soundFile.exists()) {
-                System.out.println("Không tìm thấy file nhạc nền: " + path);
-                return;
-            }
-
-            AudioInputStream audioIn = AudioSystem.getAudioInputStream(soundFile);
-            backgroundMusic = AudioSystem.getClip();
-            backgroundMusic.open(audioIn);
-        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-            System.out.println("Lỗi khi tải nhạc nền: " + e.getMessage());
-        }
-    }
-
     public void playSound(String name) {
         if (!soundEnabled) return;
 
@@ -80,25 +61,8 @@ public class SoundManager {
         }
     }
 
-    public void playBackgroundMusic() {
-        if (backgroundMusic != null && soundEnabled) {
-            backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
-        }
-    }
-
-    public void stopBackgroundMusic() {
-        if (backgroundMusic != null && backgroundMusic.isRunning()) {
-            backgroundMusic.stop();
-        }
-    }
-
     public void toggleSound() {
         soundEnabled = !soundEnabled;
-        if (!soundEnabled) {
-            stopBackgroundMusic();
-        } else {
-            playBackgroundMusic();
-        }
     }
 
     public boolean isSoundEnabled() {
@@ -107,8 +71,13 @@ public class SoundManager {
 
     public void setSoundEnabled(boolean enabled) {
         this.soundEnabled = enabled;
-        if (!enabled) {
-            stopBackgroundMusic();
+    }
+
+    public void stopAllSounds() {
+        for (Clip clip : sounds.values()) {
+            if (clip != null && clip.isRunning()) {
+                clip.stop();
+            }
         }
     }
 }
