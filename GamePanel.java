@@ -18,21 +18,50 @@ public class GamePanel extends JPanel implements ActionListener {
     private boolean isPaused = false;
     private boolean ballAttached = true;
     private ArrayList<PowerUp> powerUps = new ArrayList<>();
+    private long expandPaddleEndTime = 0;
+    private long slowBallEndTime = 0;
+    private long fireBallEndTime = 0;
     private void activatePowerUp(String type) {
         switch (type) {
             case "expand":
-                paddle.setWidth(paddle.getWidth() + 50);
+                // Sửa: Luôn tính từ kích thước gốc
+                paddle.setWidth((int)(paddle.getOriginalWidth() * 1.5)); 
+                expandPaddleEndTime = System.currentTimeMillis() + 10000; // Hẹn giờ 10 giây
                 break;
             case "slow":
-                ball.setSpeed(ball.getDx() / 2, ball.getDy() / 2);
+                // Sửa: Dùng hàm slowDown()
+                ball.slowDown(); 
+                slowBallEndTime = System.currentTimeMillis() + 10000; // Hẹn giờ 10 giây
                 break;
             case "shield":
                 lives++;
                 break;
             case "fire":
                 ball.setFireMode(true);
+                fireBallEndTime = System.currentTimeMillis() + 10000; // Hẹn giờ 10 giây
                 break;
+        }
+    }
+    // THÊM HÀM MỚI NÀY: Để kiểm tra và tắt Power-up
+    private void checkPowerUpTimers() {
+        long currentTime = System.currentTimeMillis();
 
+        // 1. Kiểm tra "Expand" timer
+        if (expandPaddleEndTime > 0 && currentTime > expandPaddleEndTime) {
+            paddle.setWidth(paddle.getOriginalWidth()); // Reset paddle
+            expandPaddleEndTime = 0; // Tắt đồng hồ
+        }
+
+        // 2. Kiểm tra "Slow" timer
+        if (slowBallEndTime > 0 && currentTime > slowBallEndTime) {
+            ball.resetSpeed(); // Reset tốc độ bóng
+            slowBallEndTime = 0; // Tắt đồng hồ
+        }
+        
+        // 3. Kiểm tra "Fire" timer
+        if (fireBallEndTime > 0 && currentTime > fireBallEndTime) {
+            ball.setFireMode(false); // Tắt bóng lửa
+            fireBallEndTime = 0; // Tắt đồng hồ
         }
     }
 
@@ -99,7 +128,10 @@ public class GamePanel extends JPanel implements ActionListener {
     }
     @Override
     public void actionPerformed(ActionEvent e) {
-        for (PowerUp p : powerUps) {
+        
+        if(!isPaused) {
+            checkPowerUpTimers();
+            for (PowerUp p : powerUps) {
             p.move();
             if (p.getRect().intersects(paddle.getRect()) && p.isActive()) {
                 activatePowerUp(p.getType());

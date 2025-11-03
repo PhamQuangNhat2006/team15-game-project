@@ -29,11 +29,11 @@ public class MenuPanel extends JPanel {
                 JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(MenuPanel.this);
 
                 if (startRect.contains(click)) {
-                    GamePanel gamePanel = new GamePanel();
-                    topFrame.setContentPane(new GamePanel());
-                    topFrame.revalidate();
-                    gamePanel.requestFocusInWindow();
-                } else if (exitRect.contains(click)) {
+    GamePanel gamePanel = new GamePanel();
+    topFrame.setContentPane(gamePanel);    
+    topFrame.revalidate();
+    gamePanel.requestFocusInWindow();
+}else if (exitRect.contains(click)) {
                     System.exit(0);
                 }
             }

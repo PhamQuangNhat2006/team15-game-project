@@ -3,9 +3,7 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-import java.awt.AlphaComposite;
 import java.util.ArrayList;
-import java.awt.Point;
 
 
 public class Ball {
@@ -16,6 +14,9 @@ public class Ball {
     private final int TRAIL_LENGTH = 10;
     private boolean fireMode = false;
     private int fireHits = 0;
+    
+    private int originalDx, originalDy;
+
 
     public Ball(int x, int y, int size, int dx, int dy) {
         this.x = x;
@@ -23,6 +24,8 @@ public class Ball {
         this.size = size;
         this.dx = dx;
         this.dy = dy;
+        this.originalDx = dx; 
+        this.originalDy = dy; 
         try {
             ballImage = ImageIO.read(new File("resources/ball.png")); // đổi tên nếu cần
         } catch (IOException e) {
@@ -102,8 +105,8 @@ public class Ball {
     public void resetPosition() {
         x = 300;
         y = 400;
-        dx = 7;
-        dy = -8;
+        dx = originalDx; 
+    dy = originalDy;
         fireMode = false;
         fireHits = 0;
         trail.clear();
@@ -138,4 +141,12 @@ public class Ball {
             }
         }
     }
+    public void slowDown() {
+    this.dx = originalDx / 2;
+    this.dy = originalDy / 2;
+}
+public void resetSpeed() {
+    this.dx = originalDx;
+    this.dy = originalDy;
+}
 }
