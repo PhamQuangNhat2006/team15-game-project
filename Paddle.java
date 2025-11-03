@@ -7,7 +7,6 @@ import java.net.URL;
 
 public class Paddle {
     private int x, y, width, height;
-    private int originalWidth;
     private BufferedImage paddleImage;
 
     public Paddle(int x, int y, int width, int height) {
@@ -15,7 +14,6 @@ public class Paddle {
         this.y = y;
         this.width = width;
         this.height = height;
-        this.originalWidth = width;
         try {
             paddleImage = ImageIO.read(new File("resources/paddle.png")); // đổi tên nếu cần
         } catch (IOException e) {
@@ -32,6 +30,9 @@ public class Paddle {
     public int getX() {
         return x;
     }
+
+    public int getY() {
+        return y;}
 
     public void setWidth(int width) {
         this.width = width;
@@ -53,8 +54,5 @@ public class Paddle {
             g.setColor(Color.CYAN);
             g.fillRect(x, y, width, height);
         }
-    }
-    public int getOriginalWidth() {
-        return this.originalWidth;
     }
 }
