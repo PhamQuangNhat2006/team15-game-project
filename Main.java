@@ -2,14 +2,18 @@ import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {
-        JFrame frame = new JFrame("Arkanoid Neon");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setResizable(false);
-        frame.setIconImage(new ImageIcon(Main.class.getResource("/Resources/icon.png")).getImage());
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Arkanoid Neon");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setResizable(true); //  kéo giãn cửa sổ
+            frame.setSize(600, 800); // Kích thước khởi đầu
+            frame.setMinimumSize(new java.awt.Dimension(400, 600)); //Giới hạn nhỏ nhất
+            frame.setIconImage(new ImageIcon(Main.class.getResource("/Resources/icon.png")).getImage());
+            MenuPanel menu = new MenuPanel();
+            frame.setContentPane(menu);
 
-        frame.setContentPane(new MenuPanel());
-        frame.pack();
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+            frame.setLocationRelativeTo(null); // Căn giữa màn hình
+            frame.setVisible(true);
+        });
     }
 }
