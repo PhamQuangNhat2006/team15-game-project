@@ -27,7 +27,18 @@ public class Ball {
             ballImage = ImageIO.read(new File("resources/ball.png")); // đổi tên nếu cần
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh bóng: " + e.getMessage());
+            e.printStackTrace();
         }
+        
+    }
+
+    public int getFireHitsRemaining() {
+        return fireHits;
+    }
+
+    public void attachToPaddle(Paddle paddle) {
+        x = paddle.getX() + paddle.getWidth() / 2 - size / 2;
+        y = paddle.getY() - size;
     }
 
     public void move() {
@@ -95,6 +106,7 @@ public class Ball {
         dy = -8;
         fireMode = false;
         fireHits = 0;
+        trail.clear();
 
     }
     public void setSpeed(int dx, int dy) {

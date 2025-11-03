@@ -16,6 +16,7 @@ public class GamePanel extends JPanel implements ActionListener {
     private int score = 0;
     private int lives = 3;
     private boolean isPaused = false;
+    private boolean ballAttached = true;
     private ArrayList<PowerUp> powerUps = new ArrayList<>();
     private void activatePowerUp(String type) {
         switch (type) {
@@ -48,10 +49,13 @@ public class GamePanel extends JPanel implements ActionListener {
     backgroundImage = ImageIO.read(getClass().getResource("/resources/background.png"));
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh nền: " + e.getMessage());
+            e.printStackTrace();
         }
 
-        ball = new Ball(300, 400, 20, 8, -9);
+        ball = new Ball(300, 400, 20, 7, -8);
         paddle = new Paddle(250, 750, 100, 15);
+        ballAttached = true;
+        ball.attachToPaddle(paddle);
         bricks = new ArrayList<>();
 
         String[] prefixes = {"brick", "yellowbrick", "greenbrick", "bluebrick"};
@@ -66,14 +70,24 @@ public class GamePanel extends JPanel implements ActionListener {
         }
 
         addMouseMotionListener(new MouseMotionAdapter() {
-
             @Override
-
             public void mouseMoved(MouseEvent e) {
-                paddle.setX(e.getX() - paddle.getWidth() / 2);
+                if (!isPaused) {
+                    paddle.setX(e.getX() - paddle.getWidth() / 2);
+                }
             }
-
         });
+
+
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (ballAttached) {
+                    ballAttached = false; // bóng bay lên
+                }
+            }
+        });
+
 
         setFocusable(true);
         addKeyListener(new InputHandler(this));
@@ -92,65 +106,64 @@ public class GamePanel extends JPanel implements ActionListener {
                 p.deactivate();
             }
         }
-        if(!isPaused) {
-        ball.move();
-        ball.checkWallCollision(WIDTH, HEIGHT);
-        if (ball.getRect().intersects(paddle.getRect())) {
-
-            ball.bounceFromPaddle(paddle);
-
-        }
-
-        for (Brick brick : bricks) {
-
-            if (!brick.isDestroyed() && ball.getRect().intersects(brick.getBounds())) {
-                brick.hit();
-                ball.reverseY();
-                score += 10;
-
-                if (!ball.isFireMode()) {
-                    ball.consumeFireHit();
+        if (!isPaused) {
+                if (ballAttached) {
+                    ball.attachToPaddle(paddle); // giữ bóng trên paddle
+                } else {
+                    ball.move();
+                    ball.checkWallCollision(WIDTH, HEIGHT);
                 }
-                else {
-                    ball.reverseY(); // chỉ bật lại nếu không phải fireball
+                if (ball.getRect().intersects(paddle.getRect())) {
+                    ball.bounceFromPaddle(paddle);
                 }
+                for (Brick brick : bricks) {
 
-                // 30% tạo power-up
-                if (Math.random() < 0.3) {
-                    String[] types = {"expand", "slow", "shield", "fire"};
-                    String type = types[(int)(Math.random() * types.length)];
-                    powerUps.add(new PowerUp(brick.getX(), brick.getY(), type));
-                }
+                    if (!brick.isDestroyed() && ball.getRect().intersects(brick.getBounds())) {
+                        brick.hit();
+                        score += 10;
 
-                break;
-            }
+                        if (ball.isFireMode()) {
+                            ball.consumeFireHit();
+                        } else {
+                            ball.reverseY(); // chỉ bật lại nếu không phải fireball
+                        }
 
-        }
+                        // 10% tạo power-up
+                        if (Math.random() < 0.1) {
+                            String[] types = {"expand", "slow", "shield", "fire"};
+                            String type = types[(int) (Math.random() * types.length)];
+                            powerUps.add(new PowerUp(brick.getX(), brick.getY(), type));
+                        }
 
-        if (ball.getY() > HEIGHT) {
-            lives--;
-            if (lives <= 0) {
-                timer.stop();
-                JOptionPane.showMessageDialog(this, "Game Over!\nĐiểm của bạn: " + score);
-
-                SwingUtilities.invokeLater(() -> {
-                    JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-                    if (topFrame != null) {
-                        topFrame.setContentPane(new MenuPanel());
-                        topFrame.revalidate();
-                    } else {
-                        System.err.println("Không tìm thấy JFrame cha.");
+                        break;
                     }
-                });
-            }
-            else {
-                ball.resetPosition();
-            }
 
+                }
+
+                if (ball.getY() > HEIGHT) {
+                    lives--;
+                    if (lives <= 0) {
+                        timer.stop();
+                        JOptionPane.showMessageDialog(this, "Game Over!\nĐiểm của bạn: " + score);
+
+                        SwingUtilities.invokeLater(() -> {
+                            JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                            if (topFrame != null) {
+                                topFrame.setContentPane(new MenuPanel());
+                                topFrame.revalidate();
+                            } else {
+                                System.err.println("Không tìm thấy JFrame cha.");
+                            }
+                        });
+                    } else {
+                        ball.resetPosition();
+                        ballAttached = true;
+                    }
+
+                }
+            }
+            repaint();
         }
-    }
-        repaint();
-    }
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -179,6 +192,11 @@ public class GamePanel extends JPanel implements ActionListener {
         }
         for (PowerUp p : powerUps) {
             p.draw(g);
+        }
+        if (ball.isFireMode()) {
+            g.setColor(Color.RED);
+            g.setFont(new Font("Arial", Font.BOLD, 16));
+            g.drawString("FIREBALL: " + ball.getFireHitsRemaining(), 250, 30);
         }
 
     }

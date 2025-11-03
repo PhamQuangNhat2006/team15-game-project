@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 
 import java.io.IOException;
+import java.net.URL;
 
 public class MenuPanel extends JPanel {
     private BufferedImage menuImage;

@@ -7,7 +7,8 @@ public class Main {
         frame.setResizable(false);
         frame.setIconImage(new ImageIcon(Main.class.getResource("/Resources/icon.png")).getImage());
 
-        frame.setContentPane(new MenuPanel());        frame.pack();
+        frame.setContentPane(new MenuPanel());
+        frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
