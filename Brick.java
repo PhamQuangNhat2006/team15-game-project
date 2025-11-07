@@ -6,9 +6,10 @@ import java.io.IOException;
 import java.net.URL;
 public class Brick {
     private int x, y;
-    private final int width = 60;
-    private final int height = 20;
+    private int width;
+    private int height;
     private int state = 0;
+    private String prefix;
     private boolean destroyed = false;
     private BufferedImage[] images = new BufferedImage[5];
 
@@ -20,10 +21,12 @@ public class Brick {
         return y;
     }
 
-    public Brick(int x, int y, String prefix) {
+    public Brick(int x, int y, String prefix, int width, int height) {
         this.x = x;
         this.y = y;
-
+        this.width = width;
+        this.height = height;
+        this.prefix = prefix;
         try {
             for (int i = 0; i < 5; i++) {
                 images[i] = ImageIO.read(new File("resources/" + prefix + "_" + i + ".png"));
@@ -31,7 +34,6 @@ public class Brick {
         } catch (IOException e) {
             System.out.println("Không thể tải ảnh gạch: " + prefix + " - " + e.getMessage());
         }
-        
     }
 
     public Rectangle getBounds() {

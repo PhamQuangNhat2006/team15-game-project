@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.awt.image.BufferedImage;
@@ -7,7 +8,7 @@ import javax.imageio.ImageIO;
 import java.io.IOException;
 
 public class GamePanel extends JPanel implements ActionListener {
-    private final int WIDTH = 600, HEIGHT = 800;
+    private final int BASE_WIDTH = 600, BASE_HEIGHT = 800;
     private Timer timer;
     private ArrayList<Ball> balls = new ArrayList<>();
     private Paddle paddle;
@@ -19,12 +20,11 @@ public class GamePanel extends JPanel implements ActionListener {
     private int lives = 3;
     private boolean isPaused = false;
     private boolean ballAttached = true;
-
     private long slowStartTime = 0;
     private boolean isSlowed = false;
 
     public GamePanel() {
-        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        setPreferredSize(new Dimension(BASE_WIDTH, BASE_HEIGHT));
         setBackground(Color.BLACK);
         setCursor(getToolkit().createCustomCursor(
                 new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB),
@@ -33,7 +33,6 @@ public class GamePanel extends JPanel implements ActionListener {
         ));
         setFocusable(true);
         requestFocusInWindow();
-
         try {
             backgroundImage = ImageIO.read(getClass().getResource("/resources/background.png"));
         } catch (IOException e) {
@@ -41,42 +40,58 @@ public class GamePanel extends JPanel implements ActionListener {
         }
 
         paddle = new Paddle(250, 750, 100, 15);
-        Ball initialBall = new Ball(300, 400, 20, 7, -8);
-        balls.add(initialBall);
+        Ball initialBall = new Ball(paddle.getX() + paddle.getWidth() / 2 - 10, paddle.getY() - 20, 20, 7, -8);
         initialBall.attachToPaddle(paddle);
+        balls.add(initialBall);
 
-        String[] prefixes = {"brick", "yellowbrick", "greenbrick", "bluebrick"};
-        for (int row = 0; row < 5; row++) {
-            for (int col = 0; col < 10; col++) {
-                int x = 60 * col + 10;
-                int y = 40 * row + 50;
-                String prefix = prefixes[row % prefixes.length];
-                bricks.add(new Brick(x, y, prefix));
-            }
-        }
+        generateBricks();
 
         addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseMoved(MouseEvent e) {
                 if (!isPaused) {
-                    int panelWidth = getWidth();
-                    int newX = Math.max(0, Math.min(e.getX() - paddle.getWidth() / 2, panelWidth - paddle.getWidth()));
+                    double scaleX = getWidth() / (double) BASE_WIDTH;
+                    int scaledWidth = (int) (paddle.getWidth() * scaleX);
+                    int newX = (int) ((e.getX() / scaleX) - scaledWidth / 2);
+                    newX = Math.max(0, Math.min(newX, BASE_WIDTH - paddle.getWidth()));
                     paddle.setX(newX);
-
                 }
             }
         });
 
         addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                if (ballAttached) {
-                    ballAttached = false;
-                }
+                if (ballAttached) ballAttached = false;
             }
         });
 
         addKeyListener(new InputHandler(this));
         timer = new Timer(10, this);
         timer.start();
+    }
+
+    private void generateBricks() {
+        List<Boolean> destroyedStates = new ArrayList<>();
+        for (Brick b : bricks) destroyedStates.add(b.isDestroyed());
+
+        bricks.clear();
+        int brickCols = 10, brickRows = 5;
+        int brickWidth = BASE_WIDTH / brickCols;
+        int brickHeight = 30;
+        String[] prefixes = {"brick", "yellowbrick", "greenbrick", "bluebrick"};
+        for (int row = 0; row < brickRows; row++) {
+            for (int col = 0; col < brickCols; col++) {
+                int x = col * brickWidth;
+                int y = row * brickHeight + 50;
+                String prefix = prefixes[row % prefixes.length];
+                bricks.add(new Brick(x, y, prefix, brickWidth, brickHeight));
+            }
+        }
+
+        for (int i = 0; i < bricks.size(); i++) {
+            if (i < destroyedStates.size() && destroyedStates.get(i)) {
+                bricks.get(i).hit();
+            }
+        }
     }
 
     private void activatePowerUp(String type) {
@@ -87,22 +102,15 @@ public class GamePanel extends JPanel implements ActionListener {
                 }
                 break;
             case "slow":
-                for (Ball b : balls) {
-                    b.setSpeed(b.getDx() / 2, b.getDy() / 2);
-                }
+                for (Ball b : balls) b.setSpeed(b.getDx() / 2, b.getDy() / 2);
                 slowStartTime = System.currentTimeMillis();
                 isSlowed = true;
                 break;
             case "shield":
-                if (lives < 6) {
-                    lives++;
-                }
+                if (lives < 6) lives++;
                 break;
-
             case "fire":
-                for (Ball b : balls) {
-                    b.setFireMode(true);
-                }
+                for (Ball b : balls) b.setFireMode(true);
                 break;
             case "multi":
                 if (!balls.isEmpty()) {
@@ -125,15 +133,12 @@ public class GamePanel extends JPanel implements ActionListener {
                 }
             }
 
-            int panelWidth = getWidth();
-            int panelHeight = getHeight();
             for (Ball b : balls) {
-
                 if (ballAttached) {
                     b.attachToPaddle(paddle);
                 } else {
                     b.move();
-                    b.checkWallCollision(panelWidth, panelHeight);
+                    b.checkWallCollision(BASE_WIDTH, BASE_HEIGHT);
                 }
 
                 if (b.getRect().intersects(paddle.getRect()) && !ballAttached) {
@@ -144,12 +149,8 @@ public class GamePanel extends JPanel implements ActionListener {
                     if (!brick.isDestroyed() && b.getRect().intersects(brick.getBounds())) {
                         brick.hit();
                         score += 10;
-
-                        if (b.isFireMode()) {
-                            b.consumeFireHit();
-                        } else {
-                            b.reverseY();
-                        }
+                        if (b.isFireMode()) b.consumeFireHit();
+                        else b.reverseY();
 
                         if (Math.random() < 0.1) {
                             ArrayList<String> availableTypes = new ArrayList<>();
@@ -162,8 +163,6 @@ public class GamePanel extends JPanel implements ActionListener {
                             String type = availableTypes.get((int) (Math.random() * availableTypes.size()));
                             powerUps.add(new PowerUp(brick.getX(), brick.getY(), type));
                         }
-
-
                         break;
                     }
                 }
@@ -173,18 +172,17 @@ public class GamePanel extends JPanel implements ActionListener {
                 long elapsed = System.currentTimeMillis() - slowStartTime;
                 if (elapsed >= 7000) {
                     for (Ball b : balls) {
-                        b.setSpeed(7, -8);
+                        int dirX = b.getDx() >= 0 ? 1 : -1;
+                        int dirY = b.getDy() >= 0 ? 1 : -1;
+                        b.setSpeed(dirX * b.getBaseSpeedX(), dirY * b.getBaseSpeedY());
                     }
                     isSlowed = false;
                 }
             }
 
             ArrayList<Ball> toRemove = new ArrayList<>();
-            for (Ball b : balls) {
-                if (b.getY() > panelHeight) {
-                    toRemove.add(b);
-                }
-            }
+            for (Ball b : balls)
+                if (!ballAttached && b.getY() > BASE_HEIGHT) toRemove.add(b);
             balls.removeAll(toRemove);
 
             if (balls.isEmpty()) {
@@ -212,42 +210,30 @@ public class GamePanel extends JPanel implements ActionListener {
 
     @Override
     protected void paintComponent(Graphics g) {
-        int panelWidth = getWidth();
-        int panelHeight = getHeight();
-
         super.paintComponent(g);
-        if (backgroundImage != null) {
-            g.drawImage(backgroundImage, 0, 0, panelWidth, panelHeight, null);
-        }
 
-        for (Ball b : balls) {
-            b.draw(g);
-        }
+        double scaleX = getWidth() / (double) BASE_WIDTH;
+        double scaleY = getHeight() / (double) BASE_HEIGHT;
+        Graphics2D g2d = (Graphics2D) g.create();
+        g2d.scale(scaleX, scaleY);
 
-        paddle.draw(g);
+        // Nền
+        if (backgroundImage != null)
+            g2d.drawImage(backgroundImage, 0, 0, BASE_WIDTH, BASE_HEIGHT, null);
 
-        for (Brick brick : bricks) {
-            brick.draw(g);
-        }
+        // Vẽ game objects
+        for (Brick brick : bricks) brick.draw(g2d);
+        for (PowerUp p : powerUps) p.draw(g2d);
+        for (Ball b : balls) b.draw(g2d);
+        paddle.draw(g2d);
 
-        for (PowerUp p : powerUps) {
-            p.draw(g);
-        }
+        // HUD
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Arial", Font.BOLD, 20));
+        g2d.drawString("Score: " + score, 20, 30);
+        g2d.drawString("Lives: " + lives, BASE_WIDTH - 100, 30);
 
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 20));
-        g.drawString("Score: " + score, 20, 30);
-        g.drawString("Lives: " + lives, panelWidth - 100, 30); // căn phải
-
-        for (Ball b : balls) {
-            if (b.isFireMode()) {
-                g.setColor(Color.RED);
-                g.setFont(new Font("Arial", Font.BOLD, 16));
-                g.drawString("FIREBALL: " + b.getFireHitsRemaining(), panelWidth / 2 - 50, 30);
-                break;
-            }
-        }
-
+        // === SLOW MODE progress bar ===
         if (isSlowed) {
             long elapsed = System.currentTimeMillis() - slowStartTime;
             int maxTime = 7000;
@@ -257,32 +243,36 @@ public class GamePanel extends JPanel implements ActionListener {
                 int filled = (int) ((elapsed / (float) maxTime) * barWidth);
                 filled = Math.min(filled, barWidth);
 
-                int barX = (panelWidth - barWidth) / 2;
+                int barX = (BASE_WIDTH - barWidth) / 2;
                 int barY = 60;
 
-                g.setColor(Color.DARK_GRAY);
-                g.fillRect(barX, barY, barWidth, barHeight);
+                g2d.setColor(Color.DARK_GRAY);
+                g2d.fillRect(barX, barY, barWidth, barHeight);
 
-                g.setColor(Color.BLUE);
-                g.fillRect(barX, barY, filled, barHeight);
+                g2d.setColor(Color.BLUE);
+                g2d.fillRect(barX, barY, filled, barHeight);
 
-                g.setColor(Color.WHITE);
-                g.drawRect(barX, barY, barWidth, barHeight);
-                g.setFont(new Font("Arial", Font.PLAIN, 12));
-                g.drawString("SLOW MODE", barX + barWidth / 2 - 30, barY - 5);
+                g2d.setColor(Color.WHITE);
+                g2d.drawRect(barX, barY, barWidth, barHeight);
+                g2d.setFont(new Font("Arial", Font.PLAIN, 12));
+                g2d.drawString("SLOW MODE", barX + barWidth / 2 - 30, barY - 5);
             }
         }
 
+        // PAUSE overlay
         if (isPaused) {
-            g.setColor(new Color(0, 0, 0, 150));
-            g.fillRect(0, 0, panelWidth, panelHeight);
-            g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 50));
+            g2d.setColor(new Color(0, 0, 0, 150));
+            g2d.fillRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Arial", Font.BOLD, 50));
             String pauseText = "PAUSED";
-            int stringWidth = g.getFontMetrics().stringWidth(pauseText);
-            g.drawString(pauseText, (panelWidth - stringWidth) / 2, panelHeight / 2);
+            int stringWidth = g2d.getFontMetrics().stringWidth(pauseText);
+            g2d.drawString(pauseText, (BASE_WIDTH - stringWidth) / 2, BASE_HEIGHT / 2);
         }
+
+        g2d.dispose();
     }
+
 
     public void togglePause() {
         this.isPaused = !this.isPaused;
@@ -292,5 +282,11 @@ public class GamePanel extends JPanel implements ActionListener {
     public void addNotify() {
         super.addNotify();
         requestFocusInWindow();
+        if (bricks.isEmpty()) {
+            SwingUtilities.invokeLater(() -> {
+                generateBricks();
+                if (!balls.isEmpty()) balls.get(0).attachToPaddle(paddle);
+            });
+        }
     }
 }

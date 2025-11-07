@@ -16,6 +16,9 @@ public class Ball {
     private final int TRAIL_LENGTH = 10;
     private boolean fireMode = false;
     private int fireHits = 0;
+    private final int baseSpeedX;
+    private final int baseSpeedY;
+
 
     public Ball(int x, int y, int size, int dx, int dy) {
         this.x = x;
@@ -23,6 +26,9 @@ public class Ball {
         this.size = size;
         this.dx = dx;
         this.dy = dy;
+        this.baseSpeedX = Math.abs(dx); // lưu độ lớn tốc độ gốc
+        this.baseSpeedY = Math.abs(dy);
+
         try {
             ballImage = ImageIO.read(new File("resources/ball.png")); // đổi tên nếu cần
         } catch (IOException e) {
@@ -31,6 +37,10 @@ public class Ball {
         }
         
     }
+
+    public int getBaseSpeedX() { return baseSpeedX; }
+    public int getBaseSpeedY() { return baseSpeedY; }
+
 
     public int getFireHitsRemaining() {
         return fireHits;
@@ -52,16 +62,36 @@ public class Ball {
     }
 
     public void checkWallCollision(int width, int height) {
-        if (x <= 0 || x + size >= width) dx *= -1;
-        if (y <= 0) dy *= -1;
+        if (x <= 0 || x + size >= width) {
+            // Đảo hướng ngang
+            dx *= -1;
+
+            // Đảm bảo bóng không “kẹt” trong tường
+            if (x <= 0) x = 1;
+            if (x + size >= width) x = width - size - 1;
+
+            // Nếu dx quá nhỏ, cho tăng nhẹ để không bị bay thẳng đứng
+            if (Math.abs(dx) < 2) {
+                dx = (dx < 0) ? -2 : 2;
+            }
+        }
+
+        if (y <= 0) {
+            dy *= -1;
+            y = 1; // tránh bị kẹt trên cùng
+        }
+
     }
 
     public void bounceFromPaddle(Paddle paddle) {
         dy = -Math.abs(dy);
         int hitPos = x + size / 2 - paddle.getX();
         double relative = (double) hitPos / paddle.getWidth();
-        dx = (int) ((relative - 0.5) * 10);
-        if (dx == 0) dx = (Math.random() < 0.5) ? -1 : 1;
+        dx = (int) ((relative - 0.5) * 10); // dx nhỏ cho bóng bay ra.
+        if (Math.abs(dx) < 2) {
+            dx = (Math.random() < 0.5) ? -2 : 2;
+        }
+
     }
 
     public void reverseY() {
@@ -120,6 +150,15 @@ public class Ball {
     public int getDy() {
         return dy;
     }
+
+    public int getSpeedX() {
+        return dx;
+    }
+
+    public int getSpeedY() {
+        return dy;
+    }
+
 
     public void setFireMode(boolean fireMode) {
         this.fireMode = fireMode;
