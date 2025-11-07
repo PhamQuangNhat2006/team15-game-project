@@ -22,6 +22,11 @@ public class GamePanel extends JPanel implements ActionListener {
     private boolean ballAttached = true;
     private long slowStartTime = 0;
     private boolean isSlowed = false;
+    private boolean leftPressed = false;
+    private boolean rightPressed = false;
+    private boolean spacePressed = false;
+    private boolean ballLaunched = false;
+
 
     public GamePanel() {
         setPreferredSize(new Dimension(BASE_WIDTH, BASE_HEIGHT));
@@ -39,13 +44,38 @@ public class GamePanel extends JPanel implements ActionListener {
             System.out.println("Không thể tải ảnh nền: " + e.getMessage());
         }
 
+        // Paddle và bóng khởi tạo
         paddle = new Paddle(250, 750, 100, 15);
-        Ball initialBall = new Ball(paddle.getX() + paddle.getWidth() / 2 - 10, paddle.getY() - 20, 20, 7, -8);
+        Ball initialBall = new Ball(
+                paddle.getX() + paddle.getWidth() / 2 - 10,
+                paddle.getY() - 20,
+                20, 7, -8
+        );
         initialBall.attachToPaddle(paddle);
         balls.add(initialBall);
 
         generateBricks();
 
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                int key = e.getKeyCode();
+                if (key == KeyEvent.VK_LEFT) leftPressed = true;
+                if (key == KeyEvent.VK_RIGHT) rightPressed = true;
+                if (key == KeyEvent.VK_SPACE && ballAttached && !balls.isEmpty()) {
+                    ballAttached = false; // bắn bóng ra
+                }
+                if (key == KeyEvent.VK_P) {
+                    togglePause();
+                }
+            }
+            @Override
+            public void keyReleased(KeyEvent e) {
+                int key = e.getKeyCode();
+                if (key == KeyEvent.VK_LEFT) leftPressed = false;
+                if (key == KeyEvent.VK_RIGHT) rightPressed = false;
+            }
+        });
         addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseMoved(MouseEvent e) {
                 if (!isPaused) {
@@ -57,17 +87,15 @@ public class GamePanel extends JPanel implements ActionListener {
                 }
             }
         });
-
         addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (ballAttached) ballAttached = false;
             }
         });
-
-        addKeyListener(new InputHandler(this));
         timer = new Timer(10, this);
         timer.start();
     }
+
 
     private void generateBricks() {
         List<Boolean> destroyedStates = new ArrayList<>();
@@ -125,6 +153,20 @@ public class GamePanel extends JPanel implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!isPaused) {
+            int paddleSpeed = 8;
+
+// Di chuyển paddle bằng phím
+            if (leftPressed && !rightPressed) {
+                paddle.move(-paddleSpeed, getWidth());
+            } else if (rightPressed && !leftPressed) {
+                paddle.move(paddleSpeed, getWidth());
+            }
+
+// Nếu bóng đang gắn vào paddle, cho nó dính theo paddle
+            if (ballAttached && !balls.isEmpty()) {
+                balls.get(0).attachToPaddle(paddle);
+            }
+
             for (PowerUp p : powerUps) {
                 p.move();
                 if (p.getRect().intersects(paddle.getRect()) && p.isActive()) {
@@ -227,7 +269,6 @@ public class GamePanel extends JPanel implements ActionListener {
         for (Ball b : balls) b.draw(g2d);
         paddle.draw(g2d);
 
-        // HUD
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Arial", Font.BOLD, 20));
         g2d.drawString("Score: " + score, 20, 30);
@@ -277,7 +318,6 @@ public class GamePanel extends JPanel implements ActionListener {
     public void togglePause() {
         this.isPaused = !this.isPaused;
     }
-
     @Override
     public void addNotify() {
         super.addNotify();
@@ -289,4 +329,6 @@ public class GamePanel extends JPanel implements ActionListener {
             });
         }
     }
+
+
 }

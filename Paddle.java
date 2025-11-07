@@ -55,4 +55,11 @@ public class Paddle {
             g.fillRect(x, y, width, height);
         }
     }
+    public void move(int dx, int panelWidth) {
+        x += dx;
+        //giới hạn paddle
+        if (x < 0) x = 0;
+        if (x + width > panelWidth) x = panelWidth - width;
+    }
+
 }

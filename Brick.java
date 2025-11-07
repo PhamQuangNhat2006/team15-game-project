@@ -58,4 +58,10 @@ public class Brick {
             g.drawImage(images[state], x, y, width, height, null);
         }
     }
+    public void move(int dx, int panelWidth) {
+        x += dx;
+        if (x < 0) x = 0;
+        if (x + width > panelWidth) x = panelWidth - width;
+    }
+
 }

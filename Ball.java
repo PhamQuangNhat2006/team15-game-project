@@ -50,6 +50,12 @@ public class Ball {
         x = paddle.getX() + paddle.getWidth() / 2 - size / 2;
         y = paddle.getY() - size;
     }
+    public void launch() {
+        if (dx == 0 && dy == 0) {
+            dx = (Math.random() < 0.5) ? -4 : 4;
+            dy = -6;
+        }
+    }
 
     public void move() {
         x += dx;
@@ -177,4 +183,5 @@ public class Ball {
             }
         }
     }
+
 }
