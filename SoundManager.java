@@ -81,6 +81,7 @@ public class SoundManager {
         }
     }
 
+
     public boolean isSoundEnabled() {
         return soundEnabled;
     }
