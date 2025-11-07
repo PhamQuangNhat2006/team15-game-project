@@ -4,20 +4,14 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public class SoundManager {
-    private HashMap<String, Clip> sounds = new HashMap<>();
     private static SoundManager instance;
-    private boolean soundEnabled = true;
+    private HashMap<String, Clip> soundClips = new HashMap<>();
+    private Clip backgroundMusic;
+    private boolean musicEnabled = true;
+    private boolean sfxEnabled = true;
 
     private SoundManager() {
-        loadSound("background", "resources/background.wav");
-        loadSound("fire", "resources/fire.wav");
-        loadSound("wall", "resources/wall.wav");
-        loadSound("paddle", "resources/paddle.wav");
-        loadSound("brick_break", "resources/brick_break.wav");
-        loadSound("win", "resources/win.wav");
-        loadSound("lose_life", "resources/lose_life.wav");
-        loadSound("hit", "resources/hit.wav");
-        loadSound("powerup", "resources/powerup.wav");
+        loadSounds();
     }
 
     public static SoundManager getInstance() {
@@ -27,62 +21,116 @@ public class SoundManager {
         return instance;
     }
 
+    private void loadSounds() {
+        // Load sound effects
+        loadSound("hit", "resources/sounds/hit.wav");
+        loadSound("paddle", "resources/sounds/paddle.wav");
+        loadSound("wall", "resources/sounds/wall.wav");
+        loadSound("powerup", "resources/sounds/powerup.wav");
+        loadSound("lose", "resources/sounds/lose_life.wav");
+        loadSound("break", "resources/sounds/brick_break.wav");
+        loadSound("fire", "resources/sounds/fire.wav");
+        loadSound("win", "resources/sounds/win.wav");
+
+        // Load background music
+        loadMusic("resources/sounds/background.wav");
+    }
+
     private void loadSound(String name, String path) {
         try {
             File soundFile = new File(path);
-            AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundFile);
-            Clip clip = AudioSystem.getClip();
-            clip.open(audioStream);
-            sounds.put(name, clip);
+            if (soundFile.exists()) {
+                AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundFile);
+                Clip clip = AudioSystem.getClip();
+                clip.open(audioStream);
+                soundClips.put(name, clip);
+            } else {
+                System.out.println("Sound file not found: " + path);
+            }
         } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-            System.out.println("Không thể tải âm thanh: " + path + " - " + e.getMessage());
+            System.out.println("Error loading sound " + name + ": " + e.getMessage());
         }
     }
 
-    public void play(String soundName) {
-        if (!soundEnabled) return;
+    private void loadMusic(String path) {
+        try {
+            File musicFile = new File(path);
+            if (musicFile.exists()) {
+                AudioInputStream audioStream = AudioSystem.getAudioInputStream(musicFile);
+                backgroundMusic = AudioSystem.getClip();
+                backgroundMusic.open(audioStream);
+            } else {
+                System.out.println("Music file not found: " + path);
+            }
+        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+            System.out.println("Error loading background music: " + e.getMessage());
+        }
+    }
 
-        Clip clip = sounds.get(soundName);
+    public void playSound(String name) {
+        if (!sfxEnabled) return;
+
+        Clip clip = soundClips.get(name);
         if (clip != null) {
+            // Stop and reset to beginning
+            clip.stop();
             clip.setFramePosition(0);
             clip.start();
         }
     }
 
-    public void loop(String soundName) {
-        if (!soundEnabled) return;
-
-        Clip clip = sounds.get(soundName);
-        if (clip != null) {
-            clip.setFramePosition(0);
-            clip.loop(Clip.LOOP_CONTINUOUSLY);
+    public void playMusic() {
+        if (backgroundMusic != null && musicEnabled) {
+            backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
         }
     }
 
-    public void stop(String soundName) {
-        Clip clip = sounds.get(soundName);
-        if (clip != null && clip.isRunning()) {
-            clip.stop();
+    public void stopMusic() {
+        if (backgroundMusic != null) {
+            backgroundMusic.stop();
         }
     }
 
-    public void stopAll() {
-        for (Clip clip : sounds.values()) {
-            if (clip != null && clip.isRunning()) {
-                clip.stop();
+    public void toggleMusic() {
+        musicEnabled = !musicEnabled;
+        if (musicEnabled) {
+            playMusic();
+        } else {
+            stopMusic();
+        }
+    }
+
+    public void toggleSFX() {
+        sfxEnabled = !sfxEnabled;
+    }
+
+    public boolean isMusicEnabled() {
+        return musicEnabled;
+    }
+
+    public boolean isSFXEnabled() {
+        return sfxEnabled;
+    }
+
+    public void setMusicVolume(float volume) {
+        if (backgroundMusic != null) {
+            FloatControl volumeControl = (FloatControl) backgroundMusic.getControl(FloatControl.Type.MASTER_GAIN);
+            float min = volumeControl.getMinimum();
+            float max = volumeControl.getMaximum();
+            float value = min + (max - min) * volume;
+            volumeControl.setValue(value);
+        }
+    }
+
+    public void cleanup() {
+        stopMusic();
+        for (Clip clip : soundClips.values()) {
+            if (clip != null) {
+                clip.close();
             }
         }
-    }
-
-    public void setSoundEnabled(boolean enabled) {
-        this.soundEnabled = enabled;
-        if (!enabled) {
-            stopAll();
+        if (backgroundMusic != null) {
+            backgroundMusic.close();
         }
-    }
-
-
-    public boolean isSoundEnabled() {
-        return soundEnabled;
     }
 }
